@@ -1,4 +1,8 @@
 venv/
+.venv/
+_inspect*.py
+_strip.py
+_update00.py
 __pycache__/
 *.pyc
 .ipynb_checkpoints/

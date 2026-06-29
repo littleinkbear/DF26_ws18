@@ -1,0 +1,11 @@
+# 纯 Python、零 AI。学生:  pip install -r engine/requirements.txt
+numpy
+pandas
+matplotlib
+pyyaml
+shapely
+osmnx     # 换地方(改 config.py 的 LAT/LON)live 抓 OSM 必需;预设大巴窑(LAT/LON=None)读 bundled data/buildings.csv 用不到它。notebook 第一格 deps.ensure() 也会自动补装
+# --- 可选:没装会友好跳过/提示,不影响主流程 ---
+# contextily   # 仅 Step 0 卫星底图用
+# pyproj       # 仅 Step 0 卫星底图用
+# plotly       # 仅 进阶-变成3D 的 plotly 滑鼠旋转视图用

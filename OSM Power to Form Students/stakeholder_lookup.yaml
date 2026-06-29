@@ -1,0 +1,26 @@
+# stakeholder_lookup.yaml — OSM tag → stakeholder(离散、可编辑、纯查表)
+# ============================================================================
+# 不做语意转换:就是「这个 tag 属于哪个权利方」的一张查表。优先序由 order 决定,
+# 第一个命中即定(例:office=government 先被 state 收走,不会再算 developer)。
+# 学生改这张表 = 改「谁算谁的」(反事实的一半)。
+# stakeholders: state 政府/公共 · developer 开发商/资本 · resident 居民 · informal 在地/非正式
+order: [state, developer, resident, informal]
+rules:
+  state:
+    office: [government]
+    amenity: [townhall, school, university, college, hospital, clinic, police, fire_station,
+              place_of_worship, courthouse, library, community_centre, public_building, theatre]
+    building: [government, civic, public, school, university, college, hospital, church,
+               cathedral, chapel, temple, mosque, fire_station, train_station, transportation, stadium]
+  developer:
+    building: [office, commercial, retail, supermarket, hotel, industrial, warehouse, kiosk]
+    amenity: [restaurant, cafe, bar, pub, bank, marketplace, cinema, fuel, pharmacy]
+    tourism: [hotel, hostel, motel]
+    any_shop: true      # shop=* (任何非空) → developer
+    any_office: true    # office=* (非 government,已被 state 先收) → developer
+  resident:
+    building: [apartments, residential, house, detached, terrace, semidetached_house,
+               dormitory, bungalow, cabin, houses]
+  informal:
+    building: [ruins, construction, shed, garage, garages, carport, container, hut, allotment_house]
+default: unknown        # building=yes 或无可辨 tag → unknown(诚实:不硬猜)

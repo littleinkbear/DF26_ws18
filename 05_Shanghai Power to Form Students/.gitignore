@@ -1,0 +1,6 @@
+# 上海教学简报 —— 中间过程档案不追踪（最终 pptx 仍追踪）。档案保留在磁盘，仅不进 git。
+# 绘图/构建工作目录（figkit/deck_kit/build_all/make_figs_*/slides_*.json/figs/wf_*）
+教學圖_build/
+# 大纲 md（过程稿）
+教学大纲_*.md
+教學大綱_*.md

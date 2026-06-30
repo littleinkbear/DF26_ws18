@@ -98,7 +98,7 @@ python_basics_course/
 > 2. 輸入這行，**結尾留一個空格**（先別按 Enter）：
 >
 >    ```bash
->    xattr -dr com.apple.quarantine 
+>    xattr -dr com.apple.quarantine
 >    ```
 >
 > 3. 把**整個專案資料夾**從 Finder **拖進終端機視窗**（會自動補上路徑），再按 **Enter**。
@@ -189,7 +189,7 @@ Windows 安裝時務必勾選 **Add Python to PATH**。
 
 ```bash
 # 建立 .venv
-python -m venv .venv        # macOS / Linux 用 python3
+python3.14 -m venv .venv        # macOS / Linux 用 python3
 ```
 
 ```powershell
@@ -365,7 +365,7 @@ python_basics_course/
 > 2. 输入这行，**结尾留一个空格**（先别按 Enter）：
 >
 >    ```bash
->    xattr -dr com.apple.quarantine 
+>    xattr -dr com.apple.quarantine
 >    ```
 >
 > 3. 把**整个项目文件夹**从 Finder **拖进终端窗口**（会自动补上路径），再按 **Enter**。

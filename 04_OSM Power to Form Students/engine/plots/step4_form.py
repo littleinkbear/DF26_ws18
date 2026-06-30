@@ -9,6 +9,7 @@ import common
 from . import _base
 
 
+@_base.safeplot
 def skyline_panels(df, heights, names=None, show=True):
     names = names or list(heights.keys())
     norm = _base.height_norm(*[heights[n] for n in names])
@@ -30,6 +31,7 @@ def skyline_panels(df, heights, names=None, show=True):
     return fig
 
 
+@_base.safeplot
 def metrics(df, heights, names=None, show=True):
     names = names or list(heights.keys())
     base_gfa = float((df.area_m2 * heights[names[0]] / common.FLOOR_H).sum())
@@ -40,7 +42,7 @@ def metrics(df, heights, names=None, show=True):
         mean_h.append(float(h.mean())); max_h.append(float(h.max()))
 
     by_sh = {}
-    for sh in common.STAKEHOLDERS:
+    for sh in _base.stakeholder_order(df=df):
         mask = (df["stakeholder"] == sh).values
         if not mask.any():
             continue
@@ -67,7 +69,7 @@ def metrics(df, heights, names=None, show=True):
     n_sh = len(by_sh); w = 0.8 / max(n_sh, 1)
     for k, (sh, d) in enumerate(by_sh.items()):
         axs[1, 1].bar(x + (k - (n_sh - 1) / 2) * w, [d[n] for n in names], width=w,
-                      color=_base.SH_COLOR[sh], label=_base.SH_LABEL[sh])
+                      color=_base.sh_color(sh), label=_base.sh_label(sh))
     axs[1, 1].set_title("各 stakeholder 平均高 (m)")
     axs[1, 1].set_xticks(x); axs[1, 1].set_xticklabels(names, rotation=12)
     axs[1, 1].legend(loc="upper center", bbox_to_anchor=(0.5, -0.12),

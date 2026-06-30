@@ -5,10 +5,11 @@ import common
 from . import _base
 
 
+@_base.safeplot
 def policy_heatmap(scenarios, show=True):
     """scenarios = common.load_scenarios() 的結果(name -> 政策 dict)。"""
     names = list(scenarios.keys())
-    shs = common.STAKEHOLDERS
+    shs = _base.stakeholder_order(scenarios=scenarios)   # 依 yaml + 情景動態取角色欄
     mult = np.ones((len(names), len(shs)))
     for i, sn in enumerate(names):
         for j, sh in enumerate(shs):
@@ -18,7 +19,7 @@ def policy_heatmap(scenarios, show=True):
     vmax = max(float(np.abs(mult - 1.0).max()), 0.1)
     im = ax.imshow(mult, cmap="RdBu_r", vmin=1 - vmax, vmax=1 + vmax, aspect="auto")
     ax.set_xticks(range(len(shs)))
-    ax.set_xticklabels(["%s\n%s" % (s, _base.SH_LABEL[s]) for s in shs], fontsize=8)
+    ax.set_xticklabels(["%s\n%s" % (s, _base.sh_label(s)) for s in shs], fontsize=8)
     ax.set_yticks(range(len(names))); ax.set_yticklabels(names, fontsize=9)
     for i in range(len(names)):
         for j in range(len(shs)):

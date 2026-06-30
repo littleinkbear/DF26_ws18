@@ -22,6 +22,7 @@ def _drawable(sub, height_col):
     return sub[keep]
 
 
+@_base.safeplot
 def city_3d(sub, height_col="height_m", elev=30, azim=-60, show=True):
     from mpl_toolkits.mplot3d.art3d import Poly3DCollection
     sub = _drawable(sub, height_col)
@@ -35,7 +36,7 @@ def city_3d(sub, height_col="height_m", elev=30, azim=-60, show=True):
         faces = _base.building_faces(r["geom"], float(r[height_col]), ox, oy)
         if not faces:
             continue
-        ax.add_collection3d(Poly3DCollection(faces, facecolor=_base.SH_COLOR[r["stakeholder"]],
+        ax.add_collection3d(Poly3DCollection(faces, facecolor=_base.sh_color(r["stakeholder"]),
                                              edgecolor="white", linewidths=0.1, alpha=0.92))
     xmax = max(p.bounds[2] for g in sub["geom"] for p in common._polys(g)) - ox
     ymax = max(p.bounds[3] for g in sub["geom"] for p in common._polys(g)) - oy
@@ -45,22 +46,24 @@ def city_3d(sub, height_col="height_m", elev=30, azim=-60, show=True):
     ax.set_xlabel("x (m)"); ax.set_ylabel("y (m)"); ax.set_zlabel("高度 (m)")
     ax.view_init(elev=elev, azim=azim)
 
-    handles = [plt.Rectangle((0, 0), 1, 1, facecolor=_base.SH_COLOR[s]) for s in common.STAKEHOLDERS]
-    ax.legend(handles, [_base.SH_LABEL[s] for s in common.STAKEHOLDERS], loc="upper center",
-              bbox_to_anchor=(0.5, -0.06), ncol=len(common.STAKEHOLDERS), fontsize=8, frameon=False)
+    shs = _base.stakeholder_order(df=sub)
+    handles = [plt.Rectangle((0, 0), 1, 1, facecolor=_base.sh_color(s)) for s in shs]
+    ax.legend(handles, [_base.sh_label(s) for s in shs], loc="upper center",
+              bbox_to_anchor=(0.5, -0.06), ncol=max(len(shs), 1), fontsize=8, frameon=False)
     fig.tight_layout()
     if show:
         plt.show()
     return fig
 
 
+@_base.safeplot
 def city_3d_plotly(sub, height_col="height_m"):
     import plotly.graph_objects as go
     from shapely.ops import triangulate
     ox, oy = _base.origin_of(sub)
 
     traces = []
-    for sh in common.STAKEHOLDERS:
+    for sh in _base.stakeholder_order(df=sub):
         rows = sub[sub["stakeholder"] == sh]
         if len(rows) == 0:
             continue
@@ -94,8 +97,8 @@ def city_3d_plotly(sub, height_col="height_m"):
                     I.append(a); J.append(a + 1); K.append(a + 2)
         if X:
             traces.append(go.Mesh3d(x=X, y=Y, z=Z, i=I, j=J, k=K,
-                                    color=_base.SH_COLOR[sh], opacity=1.0,
-                                    name=_base.SH_LABEL[sh], showlegend=True, flatshading=True))
+                                    color=_base.sh_color(sh), opacity=1.0,
+                                    name=_base.sh_label(sh), showlegend=True, flatshading=True))
 
     fig = go.Figure(data=traces)
     fig.update_layout(

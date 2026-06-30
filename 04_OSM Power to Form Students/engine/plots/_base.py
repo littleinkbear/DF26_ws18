@@ -9,6 +9,9 @@ plots/_base.py — 繪圖共用核心(view 層 DRY)
   - plots/    = view(畫),只收「已算好的」df / heights / scenarios。
   - 不在這裡強制 matplotlib 後端 → notebook 用 inline、steps/*.py 在 __main__ 設 Agg。
 """
+import functools
+import warnings
+import traceback
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
@@ -94,6 +97,103 @@ SH_COLOR = {"state": "#4a6fa5", "developer": "#c0654a", "resident": "#5a9367",
             "informal": "#c2a23c", "unknown": "#b8b8b8"}
 SH_LABEL = {"state": "政府/公共", "developer": "開發商/資本", "resident": "居民",
             "informal": "在地/非正式", "unknown": "未標(building=yes/無tag)"}
+
+# 學生自由改 stakeholder_lookup.yaml(加 key / 改名)時,沒預設色/名的角色用這組
+# 備用色循環,並記住分配結果,讓同一場圖的圖例與圖面顏色一致。
+_AUTO_PALETTE = ["#7b5ea7", "#3c8d99", "#b5651d", "#8a8d3c",
+                 "#a23c6e", "#3c6ea2", "#6e8a3c", "#9a9a9a"]
+_auto_assigned = {}
+
+
+def sh_color(sh):
+    """角色 → 顏色。預設角色用既定色;學生自加的 key 自動配備用色(穩定、不報錯)。"""
+    if sh in SH_COLOR:
+        return SH_COLOR[sh]
+    if sh not in _auto_assigned:
+        _auto_assigned[sh] = _AUTO_PALETTE[len(_auto_assigned) % len(_AUTO_PALETTE)]
+    return _auto_assigned[sh]
+
+
+def sh_label(sh):
+    """角色 → 中文名。沒登記的 key 直接用 key 本身當標籤(不報錯)。"""
+    return SH_LABEL.get(sh, str(sh))
+
+
+def stakeholder_order(df=None, scenarios=None):
+    """動態決定要畫哪些 stakeholder、以什麼順序。學生改 yaml(加/改 key)也照畫。
+      1) 先用 stakeholder_lookup.yaml 的 order + default。
+      2) 再補上 df['stakeholder'] / scenarios 裡實際出現、但 yaml order 沒列到的 key。
+    讀檔失敗就退回 common.STAKEHOLDERS,絕不丟例外。"""
+    order = []
+    try:
+        lk = common.load_lookup() or {}
+        order = [s for s in lk.get("order", []) if s]
+        d = lk.get("default", "unknown")
+        if d and d not in order:
+            order.append(d)
+    except Exception:
+        order = []
+    if not order:
+        order = list(common.STAKEHOLDERS)
+    extra = []
+    try:
+        if df is not None and "stakeholder" in getattr(df, "columns", []):
+            extra += [s for s in df["stakeholder"].dropna().unique().tolist()]
+    except Exception:
+        pass
+    try:
+        for sc in (scenarios or {}).values():
+            if isinstance(sc, dict):
+                extra += [k for k in sc.keys() if not str(k).startswith("_")]
+    except Exception:
+        pass
+    for s in extra:
+        if s not in order:
+            order.append(s)
+    return order
+
+
+AUTOSAVE = True   # True = 每張圖在顯示之餘,自動存一份 PNG 到 out/{timestamp}(common.OUT)
+
+
+def _autosave(name, result):
+    """把 matplotlib 圖自動存進 common.OUT(本次時間戳夾)。檔名 = 函式名,
+    同名多次呼叫自動加序號不覆寫。plotly 圖(非 matplotlib Figure)略過。"""
+    if not AUTOSAVE:
+        return
+    try:
+        from matplotlib.figure import Figure
+        if not isinstance(result, Figure):
+            return
+        p = common.OUT / (name + ".png")
+        k = 1
+        while p.exists():
+            p = common.OUT / ("%s_%d.png" % (name, k)); k += 1
+        result.savefig(p, dpi=120, bbox_inches="tight")
+        print("  [已存圖]", p.relative_to(common.ROOT))
+    except Exception:
+        pass   # 存圖失敗絕不影響畫圖/顯示
+
+
+def safeplot(fn):
+    """繪圖函式護欄:任何錯誤都「印友善提示 + 回 None」,不中斷 notebook Run All。
+    讓同學放心亂改 config.py / *.yaml — 改壞某張圖頂多那張不出來,其餘照畫。
+    另:成功畫出的 matplotlib 圖會自動存一份到 out/{timestamp}(見 _autosave)。"""
+    @functools.wraps(fn)
+    def _wrap(*args, **kwargs):
+        try:
+            result = fn(*args, **kwargs)
+        except Exception as e:
+            # 只用 cp950(Windows 繁中終端機)能編碼的字元,避免提示本身又噴 UnicodeEncodeError
+            print("[繪圖失敗] %s 已跳過(不影響其他圖):%s: %s"
+                  % (fn.__name__, type(e).__name__, e))
+            print("  請檢查你改的 config.py / *.yaml(數值、key 名稱、縮排對齊)。")
+            traceback.print_exc(limit=2)
+            return None
+        _autosave(fn.__name__, result)
+        return result
+    return _wrap
+
 
 HEIGHT_CMAP = plt.get_cmap("viridis")   # 高度色階:低=深紫、高=黃,所有圖共用可橫比
 

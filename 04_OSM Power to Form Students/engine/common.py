@@ -31,7 +31,16 @@ from shapely.ops import triangulate
 ENGINE = Path(__file__).resolve().parent   # engine/(程式碼,学生不用进)
 ROOT = ENGINE.parent                        # 项目根目录:data/ out/ config.py *.yaml *.ipynb 都在这
 DATA = ROOT / "data" / "buildings.csv"
-OUT = ROOT / "out"; OUT.mkdir(exist_ok=True)
+
+# 输出不覆写:每次跑(每个 Python 程序 / kernel)产出进 out/{时间戳} 自己的资料夹。
+#   - notebook Run All:同一个 kernel 共用同一个时间戳资料夹 → 一次跑的图/OBJ/CSV 聚在一起。
+#   - 终端各 step 各跑一次:各自一个时间戳资料夹,彼此不覆写、也不覆写上一次的结果。
+# 想回看旧结果就开旧时间戳资料夹;OUT_ROOT 是所有批次的总目录。
+import datetime as _dt
+RUN_STAMP = _dt.datetime.now().strftime("%Y%m%d_%H%M%S")   # 本次执行的时间戳(程序启动时定一次)
+OUT_ROOT = ROOT / "out"                                     # 所有批次的总目录
+OUT = OUT_ROOT / RUN_STAMP                                  # 本次执行专属输出夹(各档写这里,不覆写)
+OUT.mkdir(parents=True, exist_ok=True)
 LOOKUP_PATH = ROOT / "stakeholder_lookup.yaml"
 SCEN_PATH = ROOT / "power_scenarios.yaml"
 
@@ -141,8 +150,31 @@ def current_buildings():
     return load_buildings() if config.BUNDLED else get_buildings(config.BBOX, config.UTM, config.PLACE)
 
 
-def load_lookup(path=LOOKUP_PATH):
-    return yaml.safe_load(open(path, encoding="utf-8"))
+def use_yaml(lookup=None, scenarios=None):
+    """切換要用哪組 YAML(assign_all / plots / scenario_heights 全部跟著)。
+    lookup / scenarios:檔名(相對本專案根目錄)或絕對路徑;None=該項保持不變。
+    回傳目前生效的 (LOOKUP_PATH, SCEN_PATH)。找不到檔就丟清楚錯誤,不會默默用錯檔。
+    用法(notebook):common.use_yaml('stakeholder_lookup-2.yaml', 'power_scenarios-2.yaml')。"""
+    global LOOKUP_PATH, SCEN_PATH
+
+    def _resolve(x, what):
+        p = Path(x)
+        if not p.is_absolute():
+            p = ROOT / p
+        if not p.exists():
+            raise FileNotFoundError("找不到 %s:%s(檔名相對 %s)" % (what, p, ROOT))
+        return p
+
+    if lookup is not None:
+        LOOKUP_PATH = _resolve(lookup, "stakeholder lookup yaml")
+    if scenarios is not None:
+        SCEN_PATH = _resolve(scenarios, "power scenarios yaml")
+    return LOOKUP_PATH, SCEN_PATH
+
+
+def load_lookup(path=None):
+    # path=None → 讀目前生效的 LOOKUP_PATH(可被 use_yaml 切換);傳 path 則讀指定檔。
+    return yaml.safe_load(open(path or LOOKUP_PATH, encoding="utf-8"))
 
 
 def _t(v):
@@ -152,18 +184,23 @@ def _t(v):
 
 
 def assign_stakeholder(row, lookup):
-    """tag → stakeholder(离散、依 lookup 的优先序)。第一个命中即定;都不中 → default。"""
-    rules = lookup["rules"]
-    for sh in lookup["order"]:
-        r = rules.get(sh, {})
-        for key in ("office", "amenity", "building", "tourism"):
-            val = _t(row.get(key, ""))
-            if val and val in r.get(key, []):
+    """tag → stakeholder(离散、依 lookup 的优先序)。第一个命中即定;都不中 → default。
+    通用规则:rule 里每个 key 都当成一个 tag 栏名,值是允许的清单(list);
+    `any_<栏名>: true` = 该栏只要非空就命中(如 any_shop / any_office / any_library)。
+    → 学生在 yaml 自由加 stakeholder、改规则 key(只要对应到资料里有的栏)都照吃,不写死四个栏。"""
+    rules = lookup.get("rules", {}) or {}
+    order = lookup.get("order") or list(rules.keys())
+    for sh in order:
+        r = rules.get(sh, {}) or {}
+        for key, want in r.items():
+            if str(key).startswith("any_"):
+                col = str(key)[4:]                       # any_shop → 看 'shop' 栏非空即算
+                if want and _t(row.get(col, "")):
+                    return sh
+                continue
+            val = _t(row.get(key, ""))                   # key 当 tag 栏名
+            if val and isinstance(want, (list, tuple, set)) and val in want:
                 return sh
-        if r.get("any_shop") and _t(row.get("shop", "")):
-            return sh
-        if r.get("any_office") and _t(row.get("office", "")):
-            return sh
     return lookup.get("default", "unknown")
 
 
@@ -175,8 +212,13 @@ def assign_all(df, lookup=None):
     return df
 
 
-def load_scenarios(path=SCEN_PATH):
-    return yaml.safe_load(open(path, encoding="utf-8"))["scenarios"]
+def load_scenarios(path=None):
+    # path=None → 讀目前生效的 SCEN_PATH(可被 use_yaml 切換)。
+    data = yaml.safe_load(open(path or SCEN_PATH, encoding="utf-8")) or {}
+    scen = data.get("scenarios")
+    if scen is None:
+        raise KeyError("YAML 缺少最外層 'scenarios:' 區塊:%s" % (path or SCEN_PATH))
+    return scen
 
 
 def apply_scenario(height_m, stakeholder, scenario):

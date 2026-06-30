@@ -17,6 +17,7 @@ engine/plots — 所有繪圖(view 層)。notebook 只 import 這一個。
   plots.city_3d(sub);                 plots.city_3d_plotly(sub)
 """
 from ._base import (SH_COLOR, SH_LABEL, HEIGHT_CMAP,
+                    sh_color, sh_label, stakeholder_order, safeplot,
                     plot_footprints, legend_below, height_norm, footer, save_fig,
                     origin_of, building_faces)
 from .step1_data import data_overview
@@ -27,6 +28,7 @@ from .step5_3d import city_3d, city_3d_plotly
 
 __all__ = [
     "SH_COLOR", "SH_LABEL", "HEIGHT_CMAP",
+    "sh_color", "sh_label", "stakeholder_order", "safeplot",
     "plot_footprints", "legend_below", "height_norm", "footer", "save_fig",
     "origin_of", "building_faces",
     "data_overview", "power_map", "policy_heatmap",

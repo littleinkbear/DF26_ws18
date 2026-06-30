@@ -45,14 +45,14 @@ def _draw_footprints(ax, df, utm=None, alpha=.62):
         g = shp_transform(to3857, r["geom"])
         for p in common._polys(g):
             xs, ys = p.exterior.xy
-            ax.fill(xs, ys, facecolor=plots.SH_COLOR[r["stakeholder"]], alpha=alpha,
+            ax.fill(xs, ys, facecolor=plots.sh_color(r["stakeholder"]), alpha=alpha,
                     edgecolor="white", linewidth=.15)
 
 
 def _color_legend(ax):
     """只放颜色图例(stakeholder 色块 + 文字),放在图面「下方」一排,不遮住图。"""
-    handles = [Patch(fc=plots.SH_COLOR[sh], label=plots.SH_LABEL[sh].split("(")[0])
-               for sh in common.STAKEHOLDERS]
+    handles = [Patch(fc=plots.sh_color(sh), label=plots.sh_label(sh).split("(")[0])
+               for sh in plots.stakeholder_order()]   # 依目前 lookup yaml 動態取角色(換組也對)
     ax.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.5, -0.02),
               ncol=len(handles), fontsize=8, frameon=False)
 

@@ -85,6 +85,16 @@ git clone https://github.com/ms-112-scott/DF26_ws18.git
 cd DF26_ws18
 ```
 
+> **還沒裝 Git？** 直接雙擊 `一鍵安裝git.bat` 即可（純 cmd 安裝，免上網找）。
+> 或自己開 cmd 用 Windows 內建的 winget 一行安裝：
+>
+> ```cmd
+> winget install --id Git.Git -e --source winget
+> ```
+>
+> 裝完**關掉視窗、重開一個新的 cmd**，再執行 `git --version` 確認。
+> 若沒有 winget（較舊的 Windows），到 <https://git-scm.com/download/win> 下載安裝即可。
+
 **B. 下載 ZIP**
 
 到 <https://github.com/ms-112-scott/DF26_ws18> →`Code`→`Download ZIP`→解壓縮→進入解壓後的資料夾。
@@ -276,6 +286,16 @@ python_basics_course/
 git clone https://github.com/ms-112-scott/DF26_ws18.git
 cd DF26_ws18
 ```
+
+> **还没装 Git？** 直接双击 `一鍵安裝git.bat` 即可（纯 cmd 安装，免上网找）。
+> 或自己开 cmd 用 Windows 内置的 winget 一行安装：
+>
+> ```cmd
+> winget install --id Git.Git -e --source winget
+> ```
+>
+> 装完**关掉窗口、重开一个新的 cmd**，再执行 `git --version` 确认。
+> 若没有 winget（较旧的 Windows），到 <https://git-scm.com/download/win> 下载安装即可。
 
 **B. 下载 ZIP**
 

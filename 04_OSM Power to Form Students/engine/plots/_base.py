@@ -12,18 +12,82 @@ plots/_base.py — 繪圖共用核心(view 層 DRY)
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
+from matplotlib import font_manager
 import numpy as np
 import common  # model 契約(STAKEHOLDERS / FLOOR_H / _polys / OUT / ROOT / honest_note)
 
-# 中文字型:有哪個用哪個,避免變成豆腐方塊
-for _f in ("Microsoft JhengHei", "Microsoft YaHei", "Arial Unicode MS",
-           "PingFang HK", "Heiti TC", "Hiragino Sans GB", "SimHei"):
+# 中文字型:自動偵測電腦實際裝了的字體,避免變成豆腐方塊。
+#   簡體中文優先 → 沒有再用繁體中文 → 都沒有用泛 CJK 字體。
+# (舊版只是設 rcParams 不會報錯,等於永遠選第一個、沒真的偵測;這裡用
+#  font_manager 查實際裝了哪些 family,挑到才用。)
+_FONT_PREF = (
+    # ---- 簡體中文優先 ----
+    "Microsoft YaHei", "SimHei", "SimSun", "KaiTi", "FangSong",   # Windows 簡中
+    "PingFang SC", "Hiragino Sans GB", "STHeiti", "STSong",       # macOS 簡中
+    "Source Han Sans SC", "Source Han Sans CN", "Noto Sans CJK SC",  # 思源/Noto 簡中
+    "WenQuanYi Zen Hei", "WenQuanYi Micro Hei",                   # Linux 簡中
+    "Droid Sans Fallback",
+    # ---- 沒有簡體才退繁體中文 ----
+    "Microsoft JhengHei", "MingLiU", "PMingLiU",                  # Windows 繁中
+    "PingFang TC", "Heiti TC", "Apple LiGothic",                  # macOS 繁中
+    "Source Han Sans TC", "Noto Sans CJK TC",                     # 思源/Noto 繁中
+    # ---- 最後泛 CJK / Unicode 後援 ----
+    "Arial Unicode MS", "PingFang HK",
+)
+
+
+# 用來驗證「這個字體真的畫得出中文」的測試字(簡 + 繁各一個常用字)
+_CJK_PROBE = "简體"
+
+
+def _font_has_cjk(path):
+    """讀字體檔的 cmap,確認真的有中文字符(避免挑到只有拉丁字的字體)。"""
     try:
-        matplotlib.rcParams["font.sans-serif"] = [_f]
-        matplotlib.rcParams["axes.unicode_minus"] = False
-        break
+        from matplotlib.ft2font import FT2Font
+        face = FT2Font(path)
+        cmap = face.get_charmap()           # {unicode_codepoint: glyph_index}
+        return all(ord(ch) in cmap for ch in _CJK_PROBE)
     except Exception:
-        pass
+        return False
+
+
+def _detect_cjk_font():
+    """偵測這台電腦能畫中文的字體,回傳 (family名, 是否經偏好序命中)。
+
+    兩段式,確保換任何同學的電腦都能用:
+      1) 偏好序命中 → 簡體優先、繁體次之(且驗證檔案真的含中文字符)。
+      2) 偏好序全沒中 → 掃描全機字體,挑第一個 cmap 真的含中文的當後援。
+    都找不到才回 None(極少見:整台機器無任何中文字型)。
+    """
+    try:
+        fonts = font_manager.fontManager.ttflist
+    except Exception:
+        return None
+    by_name = {}
+    for f in fonts:
+        by_name.setdefault(f.name, f.fname)   # family -> 任一字體檔路徑
+    # 1) 偏好序:簡 → 繁,命中且檔案確實含中文才採用
+    for name in _FONT_PREF:
+        if name in by_name and _font_has_cjk(by_name[name]):
+            return name
+    # 2) 偏好序沒中 → 全機掃描,挑任何畫得出中文的字體
+    for f in fonts:
+        if _font_has_cjk(f.fname):
+            return f.name
+    return None
+
+
+_CJK_FONT = _detect_cjk_font()
+if _CJK_FONT:
+    # 偵測到的字體擺第一,其餘偏好序當後援,DejaVu Sans 殿後(拉丁字不缺字)。
+    matplotlib.rcParams["font.sans-serif"] = (
+        [_CJK_FONT] + [f for f in _FONT_PREF if f != _CJK_FONT] + ["DejaVu Sans"]
+    )
+else:
+    import warnings
+    warnings.warn("未偵測到任何中文字型,圖上中文可能顯示為方塊。"
+                  "請安裝任一中文字體(如 Noto Sans CJK / 思源黑體)。")
+matplotlib.rcParams["axes.unicode_minus"] = False   # 負號用 ASCII,不靠中文字型
 
 # ---- 角色調色盤(view):color = 著色,label = 中文名 -----------------------
 SH_COLOR = {"state": "#4a6fa5", "developer": "#c0654a", "resident": "#5a9367",

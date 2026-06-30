@@ -1,0 +1,57 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>上海三站 — 權力 → 形態</title>
+<style>
+:root{--accent:#0f5e63;--ink:#1a1f22;--muted:#717b80;--line:#e6e9ea;--bg:#f7f8f7;
+ --state:#5b86c4;--developer:#e08763;--resident:#7bbf86;--informal:#dcc04e;--unknown:#9aa3a6;}
+*{box-sizing:border-box;} html{scroll-behavior:smooth;}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.7 "Helvetica Neue","PingFang SC","Microsoft YaHei",system-ui,sans-serif;}
+.wrap{max-width:1080px;margin:0 auto;padding:0 22px 90px;}
+.cover{max-width:1180px;margin:0 auto;padding:30px 22px 4px;}
+.cover .kick{letter-spacing:.18em;text-transform:uppercase;font-size:11px;color:var(--muted);margin:0 0 8px;}
+.cover h1{font-size:27px;line-height:1.3;margin:0 0 8px;font-weight:750;}
+.cover p.lead{margin:0 0 16px;color:#3a4347;max-width:830px;font-size:15.5px;}
+.sat2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:760px){.sat2{grid-template-columns:1fr;}}
+.hero{max-width:1180px;margin:16px auto 0;padding:0 22px;}
+.hero p.lead2{margin:0 0 10px;color:var(--muted);font-size:14px;}
+#stage{position:relative;width:100%;height:60vh;min-height:420px;border-radius:12px;overflow:hidden;background:#eaeef0;border:1px solid var(--line);}
+#cv3d{width:100%;height:100%;display:block;}
+.hud{position:absolute;left:14px;top:14px;display:flex;flex-direction:column;gap:9px;max-width:300px;}
+.scn{display:flex;flex-wrap:wrap;gap:6px;}
+.scn button{font:inherit;font-size:12.5px;font-weight:600;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:20px;padding:5px 12px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.scn button.on{background:var(--accent);border-color:var(--accent);color:#fff;}
+.hud .card{background:rgba(255,255,255,.92);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:10px;padding:10px 13px;font-size:12.5px;box-shadow:0 1px 6px rgba(0,0,0,.08);}
+.hud .metric{display:flex;justify-content:space-between;gap:14px;padding:1px 0;} .hud .metric b{font-variant-numeric:tabular-nums;}
+.legend{display:flex;flex-wrap:wrap;gap:8px 12px;margin-top:4px;font-size:12px;}
+.legend i{width:11px;height:11px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:-1px;}
+.toggle{font-size:12px;color:var(--muted);} .toggle a{color:var(--accent);cursor:pointer;text-decoration:underline;}
+.hint3d{position:absolute;right:14px;bottom:12px;font-size:11.5px;color:#5a6468;background:rgba(255,255,255,.72);padding:2px 7px;border-radius:6px;}
+.herofoot{max-width:1180px;margin:0 auto;padding:10px 22px 6px;font-size:12.5px;color:var(--muted);}
+h2{font-size:20px;margin:46px 0 12px;border-bottom:2px solid var(--accent);padding-bottom:7px;}
+h2 .num{display:inline-block;background:var(--accent);color:#fff;font-size:12px;font-weight:700;padding:3px 9px;border-radius:4px;margin-right:11px;vertical-align:middle;}
+p{margin:0 0 13px;} b{color:#0c4a4e;} code{background:#eaf0f0;color:#0a4448;padding:1px 6px;border-radius:4px;font-size:.88em;font-family:"SF Mono",Menlo,monospace;}
+.teach{background:#eaf4f4;border-left:4px solid var(--accent);padding:10px 15px;border-radius:0 6px 6px 0;font-size:14.5px;margin:13px 0 0;}
+.teach .tag{display:inline-block;background:var(--accent);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;margin-right:9px;}
+figure{margin:16px 0 6px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff;}
+figure img{display:block;width:100%;height:auto;} figcaption{font-size:12.5px;color:var(--muted);padding:8px 13px;background:#f3f5f5;border-top:1px solid var(--line);}
+table{border-collapse:collapse;width:100%;margin:10px 0 16px;font-size:14px;} th,td{border:1px solid var(--line);padding:8px 11px;text-align:center;} thead th{background:var(--accent);color:#fff;} tbody tr:nth-child(odd){background:#f5f8f8;}
+.chips{margin:8px 0;} .chip{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:20px;padding:4px 11px 4px 8px;margin:0 7px 7px 0;font-size:13px;} .chip .dot{width:11px;height:11px;border-radius:50%;}
+.honest{background:#fff;border:1px solid var(--line);border-radius:10px;padding:6px 22px 16px;margin-top:40px;} .honest h2{border-bottom-color:#c0654a;} .honest li{margin:0 0 8px;font-size:14px;}
+footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);text-align:center;}
+.nav{max-width:1180px;margin:0 auto;padding:14px 22px 0;font-size:13px;color:var(--muted);} .nav a{color:var(--accent);text-decoration:none;margin-right:14px;}
+.cap{display:flex;gap:6px;margin-top:2px;}
+.cap button{font:inherit;font-size:12px;font-weight:600;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:20px;padding:4px 10px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+
+.grid{max-width:1080px;margin:20px auto;padding:0 22px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+@media(max-width:760px){.grid{grid-template-columns:1fr;}}
+.sc{display:flex;flex-direction:column;gap:4px;border:1px solid var(--line);border-radius:12px;padding:18px;color:var(--ink);background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.05);}
+.sc b{font-size:18px;color:var(--accent);} .sc span{font-size:13px;color:#3a4347;} .sc small{font-size:12px;color:var(--muted);margin-top:4px;}
+.sc .lk{display:flex;flex-direction:column;gap:6px;margin-top:12px;} .sc .lk a{font-size:13px;color:var(--accent);text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:7px 11px;background:#f5faf9;}
+.sc .lk a:hover{background:#e8f3f2;}
+</style></head><body>
+<div class="cover"><p class="kick">Urban Stakeholder Workshop · 上海本地多源</p>
+<h1>同一座城,三種權力,三種天際線</h1>
+<p class="lead">同一套方法(本地多源真實數據 → 用途的離散級聯查表 → 只調高度的 conserve/grow 情景),跑上海三個形態家族的代表街道。每站點開互動 3D + 衛星 + 靜態對比。</p></div>
+<div class="grid"><div class="sc"><b>陸家嘴街道</b><span>資本/超高層</span><small>3263 棟 · 最高 338m · unknown 4%</small><div class="lk"><a href="lujiazui/report.html">打開報告 → 只調高度 + 進階權力算子</a></div></div><div class="sc"><b>曹楊新村街道</b><span>單位/工人新村</span><small>1654 棟 · 最高 107m · unknown 2%</small><div class="lk"><a href="caoyang/report.html">打開報告 → 只調高度 + 進階權力算子</a></div></div><div class="sc"><b>豫園街道</b><span>居民/里弄石庫門</span><small>1636 棟 · 最高 101m · unknown 4%</small><div class="lk"><a href="yuyuan/report.html">打開報告 → 只調高度 + 進階權力算子</a></div></div></div>
+<div class="wrap"><p style="color:#717b80;font-size:13px;margin-top:24px">數據:上海城市數據集(AI建築-實測高度 / EULUC用途 / 帶年份Function / 百度AOI)。零 AI 推斷。informal 本數據無信號、恆空。選點見 shanghai_probe.md。</p></div>
+</body></html>

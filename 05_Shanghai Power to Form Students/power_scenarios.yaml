@@ -1,0 +1,42 @@
+# power_scenarios.yaml — 权力变化两种模型(footprint 与 stakeholder 标签永远不变,只动高度)
+# ============================================================================
+# _mode(默认 conserve):
+#  conserve(总量守恒、重分配)——总 GFA 不变,权力只重分配既有总量(某方多拿、某方少拿,加总守恒)。
+#    每方 mult = 吸引力权重:>1 多拿、<1 让出;引擎正规化使 Σ新GFA = Σ旧GFA。→ step4「总GFA×基线」=×1.00。
+#  grow(只增、都更新增)——既有为地板,只增不减,总 GFA 上升。
+# informal 在上海无信号、棟数为 0,其 mult 写了也不起作用(留作占位)。
+scenarios:
+  current:
+    _mode: conserve
+
+  developer_led:           # 开发商主导:资本多拿,其余让出(守恒)
+    _mode: conserve
+    developer: {mult: 1.6}
+    resident:  {mult: 0.90}
+    state:     {mult: 0.95}
+    informal:  {mult: 0.85}
+    unknown:   {mult: 0.95}
+
+  community_led:           # 社区主导:居民多拿,资本让出(守恒)
+    _mode: conserve
+    developer: {mult: 0.70}
+    resident:  {mult: 1.30}
+    state:     {mult: 1.10}
+    informal:  {mult: 1.20}
+    unknown:   {mult: 1.00}
+
+  state_eco:               # 国家生态:公共多拿、资本让出(守恒)
+    _mode: conserve
+    developer: {mult: 0.70}
+    resident:  {mult: 0.95}
+    state:     {mult: 1.60}
+    informal:  {mult: 1.00}
+    unknown:   {mult: 0.95}
+
+  developer_renewal:       # (grow 对照)都更新增:资本与居民实际加蓋,总 GFA 上升
+    _mode: grow
+    developer: {mult: 1.5}
+    resident:  {mult: 1.15}
+    state:     {mult: 1.0}
+    informal:  {mult: 1.0}
+    unknown:   {mult: 1.2}

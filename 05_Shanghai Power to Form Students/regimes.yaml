@@ -1,0 +1,53 @@
+# regimes.yaml —— 进阶册:权力体制 = 原子算子(engine/operators.py)的配方
+# ============================================================================
+# 主册「只调高度」只放开一个自由度(高度);进阶册放开**形态语法**:权力改的是城市怎么长。
+# 每个体制 = 一串算子(按序施加)。改这里 = 改「这种权力如何重写城市」,不必碰程式。
+# 想自己加/换算子:见「算子替换指南.md」(复制粘贴即可)。
+#
+# 算子词汇(见 engine/operators.py / 进阶 notebook 的算子图谱):
+#   freeze(who)                          锁定某些 stakeholder 不动(state/遗产)
+#   weight_height(weights, mode)         按 stakeholder 权重重分配高度(conserve 守恒 / grow)
+#   concentrate(center,reach_frac,...)   高度向权力重心按距离收拢(守恒,单峰)
+#   split_to_towers(target,above_m2,k)   大 footprint 沿长轴拆成 k 块塔(GFA 守恒)
+#   slim(target,ratio)                   footprint 缩、高度补偿(塔化,单栋 GFA 守恒)
+#   densify(target,far_gain,cap_m)       抬高度 = 加 GFA(加密)
+#   infill(target,cell_m2,min_h,max_h,vary)  大体量细分成自建小单元(细粒低层)
+#   level(target,toward,alpha)           高度趋同(toward: median/p40/数值;alpha 强度)
+#   open_ground(target,ratio,cap_m)      缩私有 footprint 释放共享地面、高度补偿(守恒)
+#
+# 这些 regime→形态 是**教学假设/可争论的语言**,不是经验断言或真实规划预测。零 AI 推断。
+
+developer_led:
+  label: 开发商主导
+  desc: 资本介入住宅/商业用地:拆板成塔 → 塔化变细 → 加密(多中心、GFA↑、覆盖↓)。state 公共不动。
+  fingerprint: 细针塔(瘦长比明显升高)
+  steps:
+    - {op: freeze, who: [state]}
+    - {op: split_to_towers, target: [resident, developer], above_m2: 1500, k: 3}
+    - {op: slim, target: [resident, developer], ratio: 0.45}
+    - {op: densify, target: [resident, developer], far_gain: 1.8, cap_m: 480}
+
+state_led:
+  label: 政府主导 / 中央集权
+  desc: 政府多拿 + 高度向权力重心(政府/公共质心)收拢(单中心一座锥峰、GFA 守恒、高度CV↑)。
+  fingerprint: 向权力重心收拢的肥峰(重心集中度普遍翻倍)
+  steps:
+    - {op: weight_height, weights: {state: 1.8, developer: 0.8, resident: 0.85, unknown: 0.9}, mode: conserve}
+    - {op: concentrate, center: state_centroid, reach_frac: 0.18, state_boost: 2.0, cap_m: 600}
+
+resident_self_build:
+  label: 居民自建为主
+  desc: 居民把大体量细分为自建小单元(细粒、高覆盖、低层、有机),高度趋低。state 公共不动。
+  fingerprint: 细粒碎化(栋数大增、高度趋低)
+  steps:
+    - {op: freeze, who: [state]}
+    - {op: infill, target: [resident, developer], cell_m2: 120, min_h: 6, max_h: 21, vary: 0.35}
+    - {op: level, target: [resident, developer], toward: p40, alpha: 0.6}
+
+shared:
+  label: 共享 / 公共平权
+  desc: 缩私有 footprint 释放共享地面 + 高度趋同(均质中高、低覆盖、大量共享地、无人独大)。
+  fingerprint: 均质开放(高度CV 最低)
+  steps:
+    - {op: open_ground, target: [resident, developer], ratio: 0.6, cap_m: 200}
+    - {op: level, target: [resident, developer, state], toward: median, alpha: 0.7}

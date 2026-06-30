@@ -1,0 +1,50 @@
+# shanghai_lookup.yaml — 离散级联查表(一栋 = 一个 stakeholder,第一个来源命中即定)
+# ============================================================================
+# cascade:按来源优先级。EULUC(地块/面级、用途类自带 行政办公501 vs 商务办公201 的政商之分)为主键,
+# 其覆盖不到处用建筑级 Function 补,再用百度 AOI 的 type/结构补。都不中 → unknown。
+# informal 不在表中(本数据无 informal 真实信号)→ 永不被指派,保留作恒空类。
+# 改这张表 = 改「谁算谁的」,不必碰程式。
+cascade: [euluc, function, aoi]
+
+# EULUC class2(中文用途)→ stakeholder
+euluc:
+  行政办公用地: state
+  教育科研用地: state
+  医疗卫生用地: state
+  体育与文化用地: state
+  公园与绿地用地: state
+  交通场站用地: state
+  机场设施用地: state
+  商务办公用地: developer
+  商业服务用地: developer
+  工业用地: developer
+  居住用地: resident
+
+# 带年份 Function → stakeholder(Office 不分政商,故仅作 EULUC 之后的补充)
+function:
+  Public service: state
+  Office: developer
+  Business: developer
+  Industry: developer
+  Residence: resident
+  Other: unknown
+
+# 百度 AOI 的 type/结构 包含关键词 → stakeholder(顺序敏感:state 先于 developer 先于 resident)
+aoi_contains:
+  政府: state
+  机关: state
+  学校: state
+  大学: state
+  医院: state
+  卫生: state
+  科教: state
+  楼宇: developer
+  写字楼: developer
+  产业园: developer
+  工厂: developer
+  商务: developer
+  住宅: resident
+  小区: resident
+  公寓: resident
+
+default: unknown

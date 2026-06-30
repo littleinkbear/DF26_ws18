@@ -85,6 +85,19 @@ git clone https://github.com/ms-112-scott/DF26_ws18.git
 cd DF26_ws18
 ```
 
+> **還沒裝 Git？不用先裝。** 直接雙擊專案根目錄的 `一鍵git更新.bat` 即可——
+> 它會自動判斷：沒有 Git 就先幫你純 cmd 安裝（優先用 Windows 內建的 winget），
+> 裝好再接著把教材更新到最新版；已經有 Git 就直接更新。
+>
+> 想自己手動裝也行，開 cmd 一行搞定：
+>
+> ```cmd
+> winget install --id Git.Git -e --source winget
+> ```
+>
+> 裝完**關掉視窗、重開一個新的 cmd**，再執行 `git --version` 確認。
+> 若沒有 winget（較舊的 Windows），到 <https://git-scm.com/download/win> 下載安裝即可。
+
 **B. 下載 ZIP**
 
 到 <https://github.com/ms-112-scott/DF26_ws18> →`Code`→`Download ZIP`→解壓縮→進入解壓後的資料夾。
@@ -92,6 +105,24 @@ cd DF26_ws18
 ```bash
 cd DF26_ws18-master
 ```
+
+> **已經用 ZIP 下載、想之後能 `git pull`？** ZIP 解壓的資料夾沒有連到 Git，
+> 需要先「接上 remote」一次。最簡單：直接雙擊資料夾裡的 `一鍵git更新.bat`——
+> 它會自動判斷，發現還沒接上就幫你初始化並連到老師的倉庫，然後更新到最新版；
+> 你改過的檔會先備份成 `name-1.ext`，之後每次雙擊就能更新。
+>
+> 想自己手動接（在解壓後的資料夾裡開 cmd）：
+>
+> ```cmd
+> git init
+> git remote add origin https://github.com/ms-112-scott/DF26_ws18.git
+> git fetch origin
+> git reset --hard origin/master
+> git branch --set-upstream-to=origin/master master
+> ```
+>
+> 之後更新只要：`git pull`。（注意：`reset --hard` 會把檔案還原成老師版本，
+> 先把自己改過的內容另存備份。）
 
 ### 步驟 1：檢查 Python
 
@@ -277,6 +308,19 @@ git clone https://github.com/ms-112-scott/DF26_ws18.git
 cd DF26_ws18
 ```
 
+> **还没装 Git？不用先装。** 直接双击项目根目录的 `一鍵git更新.bat` 即可——
+> 它会自动判断：没有 Git 就先帮你纯 cmd 安装（优先用 Windows 内置的 winget），
+> 装好再接着把教材更新到最新版；已经有 Git 就直接更新。
+>
+> 想自己手动装也行，开 cmd 一行搞定：
+>
+> ```cmd
+> winget install --id Git.Git -e --source winget
+> ```
+>
+> 装完**关掉窗口、重开一个新的 cmd**，再执行 `git --version` 确认。
+> 若没有 winget（较旧的 Windows），到 <https://git-scm.com/download/win> 下载安装即可。
+
 **B. 下载 ZIP**
 
 到 <https://github.com/ms-112-scott/DF26_ws18> →`Code`→`Download ZIP`→解压缩→进入解压后的文件夹。
@@ -284,6 +328,24 @@ cd DF26_ws18
 ```bash
 cd DF26_ws18-master
 ```
+
+> **已经用 ZIP 下载、想之后能 `git pull`？** ZIP 解压的文件夹没有连到 Git，
+> 需要先「接上 remote」一次。最简单：直接双击文件夹里的 `一鍵git更新.bat`——
+> 它会自动判断，发现还没接上就帮你初始化并连到老师的仓库，然后更新到最新版；
+> 你改过的文件会先备份成 `name-1.ext`，之后每次双击就能更新。
+>
+> 想自己手动接（在解压后的文件夹里开 cmd）：
+>
+> ```cmd
+> git init
+> git remote add origin https://github.com/ms-112-scott/DF26_ws18.git
+> git fetch origin
+> git reset --hard origin/master
+> git branch --set-upstream-to=origin/master master
+> ```
+>
+> 之后更新只要：`git pull`。（注意：`reset --hard` 会把文件还原成老师版本，
+> 先把自己改过的内容另存备份。）
 
 ### 步骤 1：检查 Python
 

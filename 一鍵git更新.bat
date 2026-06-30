@@ -15,6 +15,9 @@ REM ===================================================================
 setlocal enabledelayedexpansion
 cd /d "%~dp0"
 
+REM  Teacher's repository (used to auto-link ZIP-downloaded folders) ---
+set "REPO_URL=https://github.com/ms-112-scott/DF26_ws18.git"
+
 echo.
 echo ===== AUTO UPDATE START =====
 echo.
@@ -103,12 +106,46 @@ REM ============================================================
 REM  STEP 1-4: update the project to the teacher's latest version
 REM ============================================================
 git rev-parse --is-inside-work-tree >nul 2>&1
-if errorlevel 1 (
-  echo [ERROR] This folder is not a git project.
-  echo         Put this file inside the cloned project folder, then run again.
+if not errorlevel 1 goto is_repo
+
+REM ----- This folder is NOT a git repo yet (e.g. downloaded as ZIP) -----
+REM  Auto-link it to the teacher's remote so you can pull from now on.
+echo [LINK] This folder is not connected to Git yet (ZIP download?).
+echo        Connecting it to the teacher's repository so you can pull later...
+echo.
+if not exist "requirements.txt" (
+  echo [ERROR] This does not look like the course folder
+  echo         ^(requirements.txt not found next to this file^).
+  echo         Put this .bat in the extracted project folder, then run again.
   goto end
 )
 
+git init >nul 2>&1
+git remote remove origin >nul 2>&1
+git remote add origin "%REPO_URL%"
+echo        Fetching from %REPO_URL% ...
+git fetch origin
+if errorlevel 1 (
+  echo [ERROR] Could not reach the remote. Check your internet connection
+  echo         and run this file again.
+  goto end
+)
+
+REM  Detect the default branch on the remote (master or main) ---
+set "DEFBR="
+git show-ref --verify --quiet refs/remotes/origin/master && set "DEFBR=master"
+if not defined DEFBR git show-ref --verify --quiet refs/remotes/origin/main && set "DEFBR=main"
+if not defined DEFBR set "DEFBR=master"
+
+REM  Point HEAD/index at the remote WITHOUT deleting your files yet,
+REM  so the steps below can back up anything you edited, then sync.
+git reset origin/!DEFBR! >nul 2>&1
+git branch -M !DEFBR! >nul 2>&1
+git branch --set-upstream-to=origin/!DEFBR! !DEFBR! >nul 2>&1
+echo        Linked to branch: !DEFBR!
+echo.
+
+:is_repo
 REM --- Clear any stuck git state (interrupted merge/rebase, stale lock) ---
 if exist ".git\index.lock" del /f /q ".git\index.lock" >nul 2>&1
 git merge --abort >nul 2>&1

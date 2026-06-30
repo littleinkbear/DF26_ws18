@@ -106,6 +106,24 @@ cd DF26_ws18
 cd DF26_ws18-master
 ```
 
+> **已經用 ZIP 下載、想之後能 `git pull`？** ZIP 解壓的資料夾沒有連到 Git，
+> 需要先「接上 remote」一次。最簡單：直接雙擊資料夾裡的 `一鍵git更新.bat`——
+> 它會自動判斷，發現還沒接上就幫你初始化並連到老師的倉庫，然後更新到最新版；
+> 你改過的檔會先備份成 `name-1.ext`，之後每次雙擊就能更新。
+>
+> 想自己手動接（在解壓後的資料夾裡開 cmd）：
+>
+> ```cmd
+> git init
+> git remote add origin https://github.com/ms-112-scott/DF26_ws18.git
+> git fetch origin
+> git reset --hard origin/master
+> git branch --set-upstream-to=origin/master master
+> ```
+>
+> 之後更新只要：`git pull`。（注意：`reset --hard` 會把檔案還原成老師版本，
+> 先把自己改過的內容另存備份。）
+
 ### 步驟 1：檢查 Python
 
 需要 **Python 3.10–3.13**（建議 3.11 或 3.12）。
@@ -310,6 +328,24 @@ cd DF26_ws18
 ```bash
 cd DF26_ws18-master
 ```
+
+> **已经用 ZIP 下载、想之后能 `git pull`？** ZIP 解压的文件夹没有连到 Git，
+> 需要先「接上 remote」一次。最简单：直接双击文件夹里的 `一鍵git更新.bat`——
+> 它会自动判断，发现还没接上就帮你初始化并连到老师的仓库，然后更新到最新版；
+> 你改过的文件会先备份成 `name-1.ext`，之后每次双击就能更新。
+>
+> 想自己手动接（在解压后的文件夹里开 cmd）：
+>
+> ```cmd
+> git init
+> git remote add origin https://github.com/ms-112-scott/DF26_ws18.git
+> git fetch origin
+> git reset --hard origin/master
+> git branch --set-upstream-to=origin/master master
+> ```
+>
+> 之后更新只要：`git pull`。（注意：`reset --hard` 会把文件还原成老师版本，
+> 先把自己改过的内容另存备份。）
 
 ### 步骤 1：检查 Python
 

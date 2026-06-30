@@ -85,8 +85,11 @@ git clone https://github.com/ms-112-scott/DF26_ws18.git
 cd DF26_ws18
 ```
 
-> **還沒裝 Git？** 直接雙擊 `一鍵安裝git.bat` 即可（純 cmd 安裝，免上網找）。
-> 或自己開 cmd 用 Windows 內建的 winget 一行安裝：
+> **還沒裝 Git？不用先裝。** 直接雙擊專案根目錄的 `一鍵git更新.bat` 即可——
+> 它會自動判斷：沒有 Git 就先幫你純 cmd 安裝（優先用 Windows 內建的 winget），
+> 裝好再接著把教材更新到最新版；已經有 Git 就直接更新。
+>
+> 想自己手動裝也行，開 cmd 一行搞定：
 >
 > ```cmd
 > winget install --id Git.Git -e --source winget
@@ -287,8 +290,11 @@ git clone https://github.com/ms-112-scott/DF26_ws18.git
 cd DF26_ws18
 ```
 
-> **还没装 Git？** 直接双击 `一鍵安裝git.bat` 即可（纯 cmd 安装，免上网找）。
-> 或自己开 cmd 用 Windows 内置的 winget 一行安装：
+> **还没装 Git？不用先装。** 直接双击项目根目录的 `一鍵git更新.bat` 即可——
+> 它会自动判断：没有 Git 就先帮你纯 cmd 安装（优先用 Windows 内置的 winget），
+> 装好再接着把教材更新到最新版；已经有 Git 就直接更新。
+>
+> 想自己手动装也行，开 cmd 一行搞定：
 >
 > ```cmd
 > winget install --id Git.Git -e --source winget

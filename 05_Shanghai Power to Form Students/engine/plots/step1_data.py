@@ -28,6 +28,7 @@ def data_overview(df, show=True):
 
     _base.footer(fig)
     fig.tight_layout(); fig.subplots_adjust(bottom=0.18)
+    _base.autosave(fig, "data_overview")
     if show:
         plt.show()
     return fig

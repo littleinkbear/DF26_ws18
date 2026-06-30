@@ -25,6 +25,7 @@ def skyline_panels(df, heights, names=None, show=True):
     fig.colorbar(sm, ax=axes, fraction=0.018, pad=0.012).set_label(
         "建物高度 (m) — 同一色階,可橫向比對", fontsize=10)
     _base.footer(fig)
+    _base.autosave(fig, "skyline_panels")
     if show:
         plt.show()
     return fig
@@ -74,6 +75,7 @@ def metrics(df, heights, names=None, show=True):
                      ncol=max(n_sh, 1), fontsize=8, frameon=False)
 
     fig.tight_layout(); fig.subplots_adjust(bottom=0.12)
+    _base.autosave(fig, "metrics")
     if show:
         plt.show()
     return fig

@@ -39,6 +39,7 @@ def operator_demo(before, after, title="", color="sh", show=True):
         sm = ScalarMappable(norm=norm, cmap=HCMAP); sm.set_array([])
         fig.colorbar(sm, ax=[a0, a1], fraction=0.018, pad=0.012).set_label("高度 (m)", fontsize=9)
     _base.footer(fig)
+    _base.autosave(fig, "operator_demo")
     if show:
         plt.show()
     return fig
@@ -59,6 +60,7 @@ def regime_compare(before, after_by_regime, names=None, labels=None, show=True):
     sm = ScalarMappable(norm=norm, cmap=HCMAP); sm.set_array([])
     fig.colorbar(sm, ax=axes, fraction=0.014, pad=0.01).set_label("建物高度 (m) — 同色阶可横比", fontsize=10)
     _base.footer(fig)
+    _base.autosave(fig, "regime_compare")
     if show:
         plt.show()
     return fig
@@ -83,6 +85,7 @@ def fingerprint_bars(rows, labels=None, show=True):
                     ha="center", va="bottom", fontsize=9)
     fig.suptitle("四种权力 → 四种形态指纹(measure.py 量化)", fontsize=13)
     fig.tight_layout(); fig.subplots_adjust(top=0.92)
+    _base.autosave(fig, "fingerprint_bars")
     if show:
         plt.show()
     return fig

@@ -56,6 +56,7 @@ def satellite_figureground(df, utm=common.UTM, zoom=16, show=True):
         ax.set_xlim(ext[0], ext[1]); ax.set_ylim(ext[2], ext[3]); ax.set_aspect("equal"); ax.axis("off")
     _base.footer(fig)
     fig.tight_layout(); fig.subplots_adjust(bottom=0.12)
+    _base.autosave(fig, "satellite_figureground")
     if show:
         plt.show()
     return fig

@@ -70,16 +70,32 @@ def dataset_root():
     return ROOT.parent.parent / "data_collection" / "上海城市数据集"   # 开发者本地回退
 
 
+# 5 个 spine 文件「干净布局」的相对路径(末段文件名是唯一锚点)。
+_SPINE_REL = {
+    "JD":  "03-行政区/2其他/乡镇街道/上海市_乡镇边界.shp",
+    "AI":  "01-建筑轮廓/②AI解析/上海市_建筑-AI影像解译-带高度.shp",
+    "EU":  "09-开源土地利用/09-开源土地利用/开源建设用地分类/Data/上海市-开源建设用地.shp",
+    "FN":  "01-建筑轮廓/③其它/上海市_建筑-带年份-内测版.shp",
+    "AOI": "02-POI&AOI/2-AOI/AOI-baiduapi/SHP/上海市_AOI.shp",
+}
+
+
+def _resolve_spine(src, rel):
+    """先按干净布局的相对路径命中;落空就在 src 下按文件名递归找(应付解压出的同名外层目录,
+    如每个分类各被压进一层同名文件夹 01-建筑轮廓/01-建筑轮廓/…)。挑路径最短、非「补充图层」副本的那个。
+    都找不到则回传 canonical 路径(.exists()=False,让上层报清楚的缺文件错)。"""
+    p = src / rel
+    if p.exists():
+        return p
+    hits = [h for h in src.rglob(Path(rel).name) if h.is_file()]
+    hits = [h for h in hits if "补充图层" not in str(h)] or hits
+    return min(hits, key=lambda q: len(str(q))) if hits else p
+
+
 def dataset_paths():
-    """5 个 spine 文件路径(相对 dataset_root)。建缓存时用,见 数据集说明.md。"""
+    """5 个 spine 文件路径。建缓存时用,见 数据集说明.md。对解压出的同名外层目录布局自动容错。"""
     src = dataset_root()
-    return {
-        "JD":  src / "03-行政区" / "2其他" / "乡镇街道" / "上海市_乡镇边界.shp",
-        "AI":  src / "01-建筑轮廓" / "②AI解析" / "上海市_建筑-AI影像解译-带高度.shp",
-        "EU":  src / "09-开源土地利用" / "09-开源土地利用" / "开源建设用地分类" / "Data" / "上海市-开源建设用地.shp",
-        "FN":  src / "01-建筑轮廓" / "③其它" / "上海市_建筑-带年份-内测版.shp",
-        "AOI": src / "02-POI&AOI" / "2-AOI" / "AOI-baiduapi" / "SHP" / "上海市_AOI.shp",
-    }
+    return {k: _resolve_spine(src, rel) for k, rel in _SPINE_REL.items()}
 
 
 # --------------------------------------------------------- 3 离散权利(级联查表)
@@ -416,6 +432,56 @@ def honest_note(place="上海"):
     return ("本地多源真实数据(AI建筑-实测高度 + EULUC用途 + 带年份Function + 百度AOI)· "
             "「谁的权利」为用途的离散级联查表、非产权考证 · informal 本数据无信号(恒空)· "
             "danwei工人新村按用途算居民(形态记得它是单位建的)· AOI价格/结构仅作离散tag不外发 · %s 教学样本" % place)
+
+
+# --------------------------------------------------------- 取数据入口的两种「准备」(让 notebook 一行取数据)
+def build_or_load(slug=None):
+    """01「亲手建缓存」那格的核心:有数据集就**现建**、否则读**随包缓存**。
+    返回 (df, source);source ∈ {'built','cache'}。学生看一行,build/load 的分支细节藏在这里。"""
+    slug = slug or config.SLUG
+    if getattr(config, "DATASET_ROOT", None) and dataset_paths()["AI"].exists():
+        build_cache(config.site_name(slug), slug)        # 从原始多源数据现建
+        return load_buildings(slug), "built"
+    return current_buildings(slug), "cache"               # 随包缓存(离线)
+
+
+# --------------------------------------------------------- 反事实:改一条查表 → 看分布变化(02 的工作单位)
+def counterfactual(df, frm="developer", to="state", lookup=None):
+    """把 euluc 表里**第一条**映射到 frm 的用途改判给 to,返回 {flip, frm, to, before, after}。
+    只在内存里试、**不动 YAML**;满意了再去真正改 shanghai_lookup.yaml。"""
+    import copy
+    lk = copy.deepcopy(lookup or load_lookup())
+    flip = next((k for k, v in lk["euluc"].items() if v == frm), None)
+    if flip is not None:
+        lk["euluc"][flip] = to
+    return {"flip": flip, "frm": frm, "to": to,
+            "before": assign_all(df).stakeholder.value_counts().to_dict(),
+            "after": assign_all(df, lk).stakeholder.value_counts().to_dict()}
+
+
+# --------------------------------------------------------- 换地方:列出数据集里所有街道名(05 选街道用)
+def subdistrict_names(contains=None):
+    """数据集里所有乡镇街道名(排序去重)。需 config.DATASET_ROOT 已设;没有则回传 []。
+    contains 不为空时只留含该子串的(如 '新村')。读 shp 的细节藏在这里,05 notebook 看一行。"""
+    P = dataset_paths()
+    if not P["JD"].exists():
+        return []
+    jd = gpd.read_file(P["JD"])
+    names = sorted(n for n in jd["name"].dropna().unique())
+    return [n for n in names if contains in n] if contains else names
+
+
+# --------------------------------------------------------- 挤 OBJ 并落盘(03 step5 的「写档」那半步)
+def export_obj(df, slug=None, name="city_current.obj", height_col="height_m"):
+    """真实 footprint 按 height_col 挤成量体 OBJ,写到 out/<slug>/<name>。回传 (path, n_verts, n_faces)。
+    mkdir / write_text 这些 I/O 细节藏在这里,notebook 只关心『挤出来、写下去』。"""
+    slug = slug or config.SLUG
+    d = OUT / slug
+    d.mkdir(parents=True, exist_ok=True)
+    obj, nv, nf = extrude_obj(df, height_col=height_col)
+    p = d / name
+    p.write_text(obj, encoding="utf-8")
+    return p, nv, nf
 
 
 if __name__ == "__main__":

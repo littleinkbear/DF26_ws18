@@ -31,6 +31,7 @@ def policy_heatmap(scenarios, show=True):
                     color="white" if shade > 0.55 else "black")
     fig.colorbar(im, ax=ax, fraction=0.025, pad=0.02).set_label("mult", fontsize=8)
     fig.tight_layout()
+    _base.autosave(fig, "policy_heatmap")
     if show:
         plt.show()
     return fig

@@ -36,6 +36,7 @@ def power_map(df, show=True):
 
     _base.footer(fig)
     fig.tight_layout(); fig.subplots_adjust(bottom=0.16)
+    _base.autosave(fig, "power_map")
     if show:
         plt.show()
     return fig

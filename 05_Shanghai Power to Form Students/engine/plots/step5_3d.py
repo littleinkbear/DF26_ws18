@@ -7,8 +7,11 @@ import common
 from . import _base
 
 
-def city_3d(sub, height_col="height_m", elev=30, azim=-60, show=True):
+def city_3d(sub, height_col="height_m", elev=30, azim=-60, top=None, show=True):
+    """top 不为 None 时,只取占地最大的 top 栋画预览(几千栋时 matplotlib 才不卡)。"""
     from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+    if top is not None and len(sub) > top:
+        sub = sub.sort_values("area_m2", ascending=False).head(top)
     ox, oy = _base.origin_of(sub)
 
     fig = plt.figure(figsize=(11, 7.5))
@@ -29,6 +32,7 @@ def city_3d(sub, height_col="height_m", elev=30, azim=-60, show=True):
     ax.legend(handles, [_base.SH_LABEL[s] for s in common.STAKEHOLDERS], loc="upper center",
               bbox_to_anchor=(0.5, -0.06), ncol=len(common.STAKEHOLDERS), fontsize=8, frameon=False)
     fig.tight_layout()
+    _base.autosave(fig, "city_3d")
     if show:
         plt.show()
     return fig

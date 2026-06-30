@@ -22,7 +22,7 @@ engine/plots — 所有绘图(view 层)。notebook 只 import 这一个。
 """
 from ._base import (SH_COLOR, SH_LABEL, HEIGHT_CMAP,
                     plot_footprints, legend_below, height_norm, footer, save_fig,
-                    origin_of, building_faces)
+                    origin_of, building_faces, capture, autosave)
 from .step0_satellite import satellite_figureground
 from .step1_data import data_overview
 from .step2_power import power_map
@@ -34,7 +34,7 @@ from .operator_atlas import operator_demo, regime_compare, fingerprint_bars
 __all__ = [
     "SH_COLOR", "SH_LABEL", "HEIGHT_CMAP",
     "plot_footprints", "legend_below", "height_norm", "footer", "save_fig",
-    "origin_of", "building_faces",
+    "origin_of", "building_faces", "capture", "autosave",
     "satellite_figureground", "data_overview", "power_map", "policy_heatmap",
     "skyline_panels", "metrics", "city_3d", "city_3d_plotly",
     "operator_demo", "regime_compare", "fingerprint_bars",

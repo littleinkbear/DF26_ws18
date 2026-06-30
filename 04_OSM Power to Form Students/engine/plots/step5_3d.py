@@ -2,19 +2,39 @@
   city_3d(sub)        — matplotlib,程式碼定角度(elev/azim)。
   city_3d_plotly(sub) — plotly,瀏覽器裡滑鼠拖動旋轉(回傳 fig,自行 .show()/.write_html())。
 sub 需有 'stakeholder' 與高度欄(預設 'height_m';可傳 height_col 指定情景高度)。"""
+import numpy as np
 import matplotlib.pyplot as plt
 import common
 from . import _base
 
 
+def _drawable(sub, height_col):
+    """濾掉畫不出來的列:高度非有限(NaN/Inf)或 footprint 空/缺。
+    任意 OSM 資料(線上抓的城市、手改的 CSV)都可能出現,留著會讓 mpl
+    autoscale 噴 'Axis limits cannot be NaN or Inf'。"""
+    h = np.isfinite(sub[height_col].astype(float))
+    geom_ok = sub["geom"].apply(lambda g: g is not None and not getattr(g, "is_empty", True)
+                                and any(True for _ in common._polys(g)))
+    keep = h & geom_ok
+    dropped = int((~keep).sum())
+    if dropped:
+        print("  city_3d:跳過 %d 棟(高度非有限或 footprint 空)" % dropped)
+    return sub[keep]
+
+
 def city_3d(sub, height_col="height_m", elev=30, azim=-60, show=True):
     from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+    sub = _drawable(sub, height_col)
+    if len(sub) == 0:
+        raise ValueError("city_3d:沒有可畫的建築(高度全非有限或 footprint 全空)")
     ox, oy = _base.origin_of(sub)
 
     fig = plt.figure(figsize=(11, 7.5))
     ax = fig.add_subplot(111, projection="3d")
     for _, r in sub.iterrows():
         faces = _base.building_faces(r["geom"], float(r[height_col]), ox, oy)
+        if not faces:
+            continue
         ax.add_collection3d(Poly3DCollection(faces, facecolor=_base.SH_COLOR[r["stakeholder"]],
                                              edgecolor="white", linewidths=0.1, alpha=0.92))
     xmax = max(p.bounds[2] for g in sub["geom"] for p in common._polys(g)) - ox

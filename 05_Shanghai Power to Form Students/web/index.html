@@ -1,0 +1,93 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>上海三站 — 權力 → 形態(隨 out/ 最新輸出)</title>
+<style>
+:root{--accent:#0f5e63;--ink:#1a1f22;--muted:#717b80;--line:#e6e9ea;--bg:#f7f8f7;
+ --state:#5b86c4;--developer:#e08763;--resident:#7bbf86;--informal:#dcc04e;--unknown:#9aa3a6;}
+*{box-sizing:border-box;} html{scroll-behavior:smooth;}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.7 "Helvetica Neue","PingFang SC","Microsoft YaHei",system-ui,sans-serif;}
+.wrap{max-width:1080px;margin:0 auto;padding:0 22px 90px;}
+.cover{max-width:1180px;margin:0 auto;padding:30px 22px 4px;}
+.cover .kick{letter-spacing:.18em;text-transform:uppercase;font-size:11px;color:var(--muted);margin:0 0 8px;}
+.cover h1{font-size:27px;line-height:1.3;margin:0 0 8px;font-weight:750;}
+.cover p.lead{margin:0 0 6px;color:#3a4347;max-width:830px;font-size:15.5px;}
+.meta{max-width:1180px;margin:0 auto;padding:2px 22px;color:var(--muted);font-size:12.5px;}
+.meta b{color:var(--accent);font-variant-numeric:tabular-nums;} .meta a{color:var(--accent);cursor:pointer;text-decoration:underline;}
+h2{font-size:20px;margin:46px 0 12px;border-bottom:2px solid var(--accent);padding-bottom:7px;}
+p{margin:0 0 13px;} b{color:#0c4a4e;} code{background:#eaf0f0;color:#0a4448;padding:1px 6px;border-radius:4px;font-size:.88em;font-family:"SF Mono",Menlo,monospace;}
+footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);text-align:center;}
+.grid{max-width:1080px;margin:16px auto;padding:0 22px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+@media(max-width:760px){.grid{grid-template-columns:1fr;}}
+.sc{display:flex;flex-direction:column;gap:4px;border:1px solid var(--line);border-radius:12px;padding:18px;color:var(--ink);background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.05);position:relative;}
+.sc b.name{font-size:18px;color:var(--accent);} .sc span.fam{font-size:13px;color:#3a4347;} .sc small.stat{font-size:12px;color:var(--muted);margin-top:4px;font-variant-numeric:tabular-nums;}
+.sc .badge{position:absolute;top:12px;right:12px;background:var(--accent);color:#fff;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px;}
+.sc .step{font-size:11.5px;color:var(--muted);margin-top:8px;}
+.thumbs{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+.thumbs a{display:block;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#f3f5f5;}
+.thumbs img{display:block;width:76px;height:56px;object-fit:cover;}
+.sc .lk{display:flex;flex-direction:column;gap:6px;margin-top:12px;} .sc .lk a{font-size:13px;color:var(--accent);text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:7px 11px;background:#f5faf9;text-align:center;}
+.sc .lk a:hover{background:#e8f3f2;}
+.empty{max-width:900px;margin:24px auto;padding:22px;border:1px dashed var(--line);border-radius:12px;background:#fff;color:#3a4347;font-size:14px;}
+.empty code{display:inline-block;margin:2px 0;}
+</style></head><body>
+<div class="cover"><p class="kick">Urban Stakeholder Workshop · 上海本地多源</p>
+<h1>同一座城,不同權力,不同天際線</h1>
+<p class="lead">本頁<b>隨時讀取 <code>out/</code> 最新一筆輸出</b>:每跑一次 notebook(自動存圖)或 <code>build_report.py</code>(出報告),刷新本頁即更新。資料來自 <code>out/manifest.json</code>。</p></div>
+<div class="meta" id="meta">讀取中…</div>
+<div class="grid" id="grid"></div>
+<div class="wrap"><p style="color:#717b80;font-size:13px;margin-top:24px">數據:上海城市數據集(AI建築-實測高度 / EULUC用途 / 帶年份Function / 百度AOI)。零 AI 推斷。informal 本數據無信號、恆空。</p></div>
+<footer>本頁靜態 HTML + 前端 fetch <code>../out/manifest.json</code>;圖與報告皆 out/ 內最新一筆。教學練習,非真實規劃預測。</footer>
+<script>
+const OUT = "../out/";   // index.html 在 web/,輸出在 out/
+function esc(s){return String(s==null?"":s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
+function stat(e){
+  const parts=[];
+  if(e.n!=null) parts.push(e.n+" 棟");
+  if(e.h_max!=null) parts.push("最高 "+e.h_max+"m");
+  if(e.unknown_pct!=null) parts.push("unknown "+e.unknown_pct+"%");
+  return parts.join(" · ") || "(尚無統計,跑 build_report 或 refresh_index)";
+}
+function card(slug,e,newest){
+  const figs=(e.figures||[]).slice(0,4).map(f=>
+    `<a href="${OUT}${esc(f)}" target="_blank"><img loading="lazy" src="${OUT}${esc(f)}" alt="${esc(f)}"></a>`).join("");
+  const step = e.step?`Step_${esc(e.step)} · ${esc(e.updated||"")}`:"";
+  const links=[];
+  if(e.report) links.push(`<a href="${OUT}${esc(e.report)}">打開報告 → 只調高度 + 進階權力算子</a>`);
+  if(e.figures&&e.figures.length) links.push(`<a href="${OUT}${esc(e.figures[0].split("/").slice(0,3).join("/"))}/" target="_blank">看本次全部 ${e.figures.length} 張圖 →</a>`);
+  return `<div class="sc">${newest?'<span class="badge">最新</span>':''}
+    <b class="name">${esc(e.name||slug)}</b><span class="fam">${esc(e.family||"")}</span>
+    <small class="stat">${stat(e)}</small>
+    ${step?`<div class="step">${step}</div>`:""}
+    <div class="thumbs">${figs}</div>
+    <div class="lk">${links.join("")||'<span style="color:#9aa3a6;font-size:12px">尚無圖/報告</span>'}</div></div>`;
+}
+function render(m){
+  const sites=m.sites||{};
+  const keys=Object.keys(sites);
+  const meta=document.getElementById("meta"), grid=document.getElementById("grid");
+  if(!keys.length){
+    meta.textContent="";
+    grid.outerHTML=`<div class="empty" id="grid"><b>out/ 目前沒有任何輸出。</b><br>跑任一 notebook(會自動存圖到 <code>out/&lt;slug&gt;/Step_&lt;NN&gt;/&lt;時間戳&gt;/</code>)或 <code>python build_report.py</code>,再刷新本頁。<br>也可手動全掃重建:<code>python refresh_index.py</code>。</div>`;
+    return;
+  }
+  // 依 updated(時間戳字串)排序,最新在前
+  keys.sort((a,b)=>String(sites[b].updated||"").localeCompare(String(sites[a].updated||"")));
+  meta.innerHTML=`資料更新:<b>${esc(m.generated||"?")}</b> · 共 <b>${keys.length}</b> 站(依最新輸出排序) · <a onclick="load()">重新讀取</a>`;
+  grid.innerHTML=keys.map((k,i)=>card(k,sites[k],i===0)).join("");
+}
+function load(){
+  fetch(OUT+"manifest.json",{cache:"no-store"})
+    .then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.json();})
+    .then(render)
+    .catch(err=>{
+      document.getElementById("meta").textContent="";
+      const grid=document.getElementById("grid");
+      grid.outerHTML=`<div class="empty" id="grid"><b>讀不到 out/manifest.json(${esc(err.message)})。</b><br>
+        多半是用 <code>file://</code> 直接開,瀏覽器擋了本地 fetch。請改用本機伺服器開啟,例如在本資料夾跑:<br>
+        <code>python -m http.server</code> 然後開 <code>http://localhost:8000/web/index.html</code>;<br>
+        或直接在 Jupyter 檔案瀏覽器點開本檔(Jupyter 以 http 提供)。<br>
+        若 out/ 還沒有輸出,先跑 notebook 或 <code>python build_report.py</code>,再 <code>python refresh_index.py</code>。</div>`;
+    });
+}
+load();
+</script>
+</body></html>

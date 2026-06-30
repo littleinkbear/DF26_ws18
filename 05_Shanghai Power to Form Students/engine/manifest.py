@@ -75,6 +75,8 @@ def bump(slug, step, ts):
         e["n"] = n
     if (common.OUT / slug / "report.html").exists():
         e["report"] = "%s/report.html" % slug
+    else:
+        e.pop("report", None)
     _save(d)
 
 
@@ -85,6 +87,9 @@ def set_report(slug, n, h_max, unknown_pct):
     name, family, _ = _meta(slug)
     e = sites.setdefault(slug, {})
     e.update(name=name, family=family, n=int(n),
-             h_max=round(float(h_max)), unknown_pct=round(float(unknown_pct)),
-             report="%s/report.html" % slug)
+             h_max=round(float(h_max)), unknown_pct=round(float(unknown_pct)))
+    if (common.OUT / slug / "report.html").exists():
+        e["report"] = "%s/report.html" % slug
+    else:
+        e.pop("report", None)
     _save(d)

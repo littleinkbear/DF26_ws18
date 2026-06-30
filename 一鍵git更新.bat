@@ -158,8 +158,8 @@ for /f "delims=" %%b in ('git rev-parse --abbrev-ref HEAD') do set "BRANCH=%%b"
 echo       Current branch: !BRANCH!
 echo.
 
-echo [2/4] Backing up files you edited (if any)...
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='SilentlyContinue'; [Console]::OutputEncoding=[Text.Encoding]::UTF8; $m=@(& git -c core.quotepath=false diff --name-only HEAD | Where-Object {$_}); if($m.Count -eq 0){ Write-Host '      (no local edits to back up)' } else { foreach($p in $m){ if(Test-Path -LiteralPath $p){ $d=Split-Path -Parent $p; $b=[IO.Path]::GetFileNameWithoutExtension($p); $e=[IO.Path]::GetExtension($p); $n=1; do { $name=('{0}-{1}{2}' -f $b,$n,$e); if([string]::IsNullOrEmpty($d)){ $c=$name } else { $c=Join-Path $d $name }; $n++ } while(Test-Path -LiteralPath $c); Copy-Item -LiteralPath $p -Destination $c -Force; Write-Host ('      backup: ' + $p + '  ->  ' + (Split-Path -Leaf $c)) } } }"
+echo [2/4] Backing up files you edited into a timestamped folder (if any)...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='SilentlyContinue'; [Console]::OutputEncoding=[Text.Encoding]::UTF8; $ts=Get-Date -Format 'yyyyMMdd_HHmmss'; $bk='_my_backup_'+$ts; $m=@(& git -c core.quotepath=false diff --name-only HEAD | Where-Object {$_}); if($m.Count -eq 0){ Write-Host '      (no local edits to back up)' } else { foreach($p in $m){ if(Test-Path -LiteralPath $p){ $dest=Join-Path $bk $p; $dd=Split-Path -Parent $dest; if($dd -and -not (Test-Path -LiteralPath $dd)){ New-Item -ItemType Directory -Force -Path $dd | Out-Null }; Copy-Item -LiteralPath $p -Destination $dest -Force; Write-Host ('      backup: ' + $p) } }; Write-Host ('      -> all saved in folder: ' + $bk) }"
 echo.
 
 echo [3/4] Restoring originals to teacher's version...
@@ -177,7 +177,7 @@ if errorlevel 1 (
 
 echo.
 echo ===== DONE.  You are now on the teacher's latest version. =====
-echo Your edits (if any) were saved as  name-1.ext  - check them anytime.
+echo Your edits (if any) were saved in a  _my_backup_<time>  folder - check anytime.
 
 :end
 echo.

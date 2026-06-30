@@ -1,0 +1,9 @@
+# Shell scripts MUST stay LF, or macOS bash fails on "#!/bin/bash\r"
+*.command text eol=lf
+*.sh      text eol=lf
+
+# Windows batch files stay CRLF
+*.bat     text eol=crlf
+
+# Mac Terminal copy-paste guide: keep LF so pasted commands carry no stray CR
+Mac_*.txt text eol=lf

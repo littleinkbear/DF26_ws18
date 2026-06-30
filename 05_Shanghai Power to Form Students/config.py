@@ -250,7 +250,7 @@ SITES = [
     {"slug": "祝桥镇", "name": "祝桥镇", "family": "镇"},
 ]
 
-# build_report.py 默认出这 3 站的报告(其余街道可单独 `python3 build_report.py <slug>`)。
+# engine/build_report.py 默认出这 3 站的报告(其余街道可单独 `python3 engine/build_report.py <slug>`)。
 REPORT_SITES = ["lujiazui", "caoyang", "yuyuan"]
 
 # ===== 以下自动推导,通常不用改 =====

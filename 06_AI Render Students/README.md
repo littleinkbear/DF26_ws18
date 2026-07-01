@@ -14,7 +14,7 @@
 | 层 | 是什么 | 谁定 | 性质 |
 |---|---|---|---|
 | **结构** | 05 的体块参考图(footprint/高度/天际线) | pipeline 计算 | **诚实、可追溯** |
-| **表面** | 文字提示词的材质/氛围 | 学生改 `prompts.yaml` | **论点 / illustrative,非数据** |
+| **表面** | 文字提示词的材质/氛围 | 学生改 `config.yaml` | **论点 / illustrative,非数据** |
 
 提示词本身也分两层:**[计算层]**(从 05 真实算出的栋数/最高高/形态指纹)+ **[论述层]**(你主张这种权力长什么样)。
 护栏:提示词明令模型**严格保住参考图体块**,不许加减楼——把 AI 的自由限制在"外观",守住诚实性。
@@ -23,15 +23,15 @@
 
 | # | notebook | 学什么 |
 |---|---|---|
-| 01 | `01_提示词生成器` | 从权力体制自动出提示词,看 [计算层]/[论述层] 拆分;改 `prompts.yaml` = 改论述 |
+| 01 | `01_提示词生成器` | 从权力体制自动出提示词,看 [计算层]/[论述层] 拆分;改 `config.yaml` = 改论述 |
 | 02 | `02_体块到影像` | 体块参考图(固定机位)+ 提示词 → Replicate 渲染(无 token 自动 dry-run) |
 | 03 | `03_过渡动画` | 三种过渡:算子强度连续扫(最诚实·离线)/ 渲染图溶解 / AI 图生视频补间 |
 
 ## 互动画布 canvas.html(★ 找角度 · 导出 ControlNet 条件图)
 
 ```bash
-python3 build_canvas.py            # 出 3 站的 out/<slug>/canvas.html
-python3 build_canvas.py caoyang    # 单站
+python run.py canvas            # 出 3 站的 out/<slug>/canvas.html
+python run.py canvas caoyang    # 单站
 ```
 自含单档、浏览器打开即用(Three.js 内联)。体块坐在**真实卫星地面**上,学生:
 - **拖拽 orbit 找角度** → 「保存当前角度」存进列表,点一下回到那个角度。
@@ -84,18 +84,21 @@ python3 engine/animate.py    lujiazui slim # 算子强度扫描动画(gif)
 
 ```
 07_AI Render Students/
-├─ 01_提示词生成器.ipynb / .繁    从权力出提示词([计算层]+[论述层])
-├─ 02_体块到影像.ipynb   / .繁    参考图 + 提示词 → Replicate 渲染
-├─ 03_过渡动画.ipynb     / .繁    算子扫描 / 溶解 / AI 补间
-├─ settings.py                    总开关:站点 SLUG / 模型 MODEL / 固定机位 CAM / 要比的体制
-├─ prompts.yaml                   论述层(可改):每种权力"看起来像什么"
-├─ out/<slug>/                    massing_*.png 参考图 · render_*.png 渲染图 · *.gif 动画
+├─ config.yaml   ★ 唯一要改的设定:站点 / 模型 / 机位 + 提示词论述层(站点·模型·体制·look 全在这)
+├─ run.py        ★ 唯一要跑的入口:python run.py [canvas|report|bridge|notebooks|<slug>]
+├─ README.md
+├─ out/<slug>/                    产出:massing_*.jpg · render_*.png · *.gif · canvas.html · report.html
+├─ web/                           three.min.js / OrbitControls.js(canvas.html 内联用)
 └─ engine/  (代码,不用进)
+   ├─ settings.py    读取器:把 config.yaml 读成 settings.SLUG/MODEL/CAM/...
+   ├─ build_canvas.py 出互动画布 canvas.html
+   ├─ build_report.py 出聚合报告 report.html + 05→06 桥接页
    ├─ ws05.py        桥:把 05 的数据/引擎/算子接进来
-   ├─ prompt_gen.py  ★ 提示词生成器(计算层 + 论述层)
+   ├─ prompt_gen.py  ★ 提示词生成器(计算层 + 论述层;论述层读 config.yaml)
    ├─ massing.py     固定机位体块参考图(= AI 的结构底)
    ├─ render.py      Replicate 调用(token 从 env;dry-run 可离线)
    ├─ animate.py     过渡动画(算子扫描 / 溶解 / 图生视频接口)
+   ├─ _build_notebooks.py  生成 01/02/03 学生 notebook(python run.py notebooks)
    └─ requirements.txt
 ```
 
@@ -103,7 +106,7 @@ python3 engine/animate.py    lujiazui slim # 算子强度扫描动画(gif)
 
 - **`google/nano-banana`**(默认)— Gemini Flash Image,"保结构改外观"目前最稳。
 - **`black-forest-labs/flux-kontext`** — 图+文编辑、保构图,备选。
-- 换模型:改 `settings.MODEL`;若新模型入参不同,在 `engine/render.py` 的 `MODEL_ADAPTERS` 加一条适配。
+- 换模型:改 `config.yaml` 的 `model`;若新模型入参不同,在 `engine/render.py` 的 `MODEL_ADAPTERS` 加一条适配。
 - 图生视频(03-C):`kwaivgi/kling-*` / `wan-video/wan-2.2-i2v` / runway / luma 等(首帧→末帧补间)。
 
 ## 诚实边界

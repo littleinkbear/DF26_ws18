@@ -30,6 +30,14 @@ camera:
 # 体块参考图 dpi
 massing_dpi: 140
 
+# 研究范围(study area)= 整个街区多边形(不再是中心矩形)。
+#   街区内 = 实心体块;街区外的「周边环」= 透明语境(给 ControlNet canny/depth 城市语境)。
+#   红线 = 街区多边形边界。卫星底覆盖「街区 + 周边环」全场景(比旧版大)。
+# 周边环宽度(米):study 街区外扩多少米当透明语境。改大=更多周边、canvas 档案更大。
+#   ⚠ 改这个数后要重建周边体量:  python run.py context lujiazui   (需 05 的 DATASET_ROOT)
+context_margin_m: 800
+study_frac: 0.5   # 已停用(旧版中心矩形);留着不影响。
+
 # 05 资料夹(相对本档;一般不用改)
 ws05_dir: "../05_Shanghai Power to Form Students"
 

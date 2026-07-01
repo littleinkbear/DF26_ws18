@@ -49,5 +49,19 @@ def regime_recs(slug=None, regimes=None):
     return out, regs
 
 
+def load_context_recs(slug=None):
+    """读某站点周边语境 recs（透明语境层，供 canny/depth/massing 的 ControlNet 语境）。
+    无 context.parquet 则回 []。frozen=True、in_study=0、sh='context'（不参与算子/形态度量）。"""
+    slug = use_site(slug)
+    df = C.load_context(slug)
+    if df is None or len(df) == 0:
+        return []
+    recs = []
+    for _, r in df.iterrows():
+        recs.append({"geom": r["geom"], "h": float(r["height_m"]), "sh": "context",
+                     "area": float(r.get("area_m2", r["geom"].area)), "frozen": True, "in_study": 0})
+    return recs
+
+
 def regime_label(regs, name):
     return "现状" if name == "current" else regs.get(name, {}).get("label", name)

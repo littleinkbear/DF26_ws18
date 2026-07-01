@@ -18,7 +18,7 @@ engine/plots — 所有绘图(view 层)。notebook 只 import 这一个。
 进阶册(算子配方):
   plots.operator_demo(before, after, "拆板成塔")
   plots.regime_compare(before, after_by_regime, labels=...)
-  plots.fingerprint_bars(rows, labels=...)
+  plots.feature_bars(rows, labels=...)
 """
 from ._base import (SH_COLOR, SH_LABEL, HEIGHT_CMAP,
                     plot_footprints, legend_below, height_norm, footer, save_fig,
@@ -29,7 +29,7 @@ from .step2_power import power_map
 from .step3_policy import policy_heatmap
 from .step4_form import skyline_panels, metrics
 from .step5_3d import city_3d, city_3d_plotly
-from .operator_atlas import operator_demo, regime_compare, fingerprint_bars
+from .operator_atlas import operator_demo, regime_compare, feature_bars
 
 __all__ = [
     "SH_COLOR", "SH_LABEL", "HEIGHT_CMAP",
@@ -37,5 +37,5 @@ __all__ = [
     "origin_of", "building_faces", "capture", "autosave",
     "satellite_figureground", "data_overview", "power_map", "policy_heatmap",
     "skyline_panels", "metrics", "city_3d", "city_3d_plotly",
-    "operator_demo", "regime_compare", "fingerprint_bars",
+    "operator_demo", "regime_compare", "feature_bars",
 ]

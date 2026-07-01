@@ -1,7 +1,7 @@
 """算子图谱【进阶册】:把「权力算子」与「权力体制」画清楚。
-  operator_demo(before, after, title)         — 单个算子的 before/after(教学核心:一个动词改了什么)
+  operator_demo(before, after, title)         — 单个算子的 before/after(教学核心:一个操作改了什么)
   regime_compare(before, after_by_regime)     — 现状 vs 各体制,同高度色阶,横向比形态
-  fingerprint_bars(rows)                       — 各体制的形态指纹(瘦长/高度CV/重心集中/栋数)
+  feature_bars(rows)                           — 各体制的形态特征(瘦长/高度CV/重心集中/栋数)
 工作单位是 recs 列表 [{geom,h,sh,frozen}](operators.py 的输出),不是 DataFrame。"""
 import numpy as np
 import matplotlib.pyplot as plt
@@ -81,8 +81,8 @@ def regime_compare(before, after_by_regime, names=None, labels=None,
     return fig
 
 
-def fingerprint_bars(rows, labels=None, show=True):
-    """rows = measure.compare(...) 的第一个返回值。画 4 个指纹指标的体制对照。"""
+def feature_bars(rows, labels=None, show=True):
+    """rows = measure.compare(...) 的第一个返回值。画 4 个特征指标的体制对照。"""
     names = list(rows.keys())
     lab = [(labels or {}).get(n, n) for n in names]
     metrics = [("slender", "瘦长比(塔化↑)"), ("h_cv", "高度CV(集权↑)"),
@@ -98,9 +98,9 @@ def fingerprint_bars(rows, labels=None, show=True):
         for i, v in enumerate(vals):
             ax.text(i, v, ("%.2f" % v) if key != "n" else ("%d" % v),
                     ha="center", va="bottom", fontsize=9)
-    fig.suptitle("四种权力 → 四种形态指纹(measure.py 量化)", fontsize=13)
+    fig.suptitle("四种权力 → 四种形态特征(measure.py 量化)", fontsize=13)
     fig.tight_layout(); fig.subplots_adjust(top=0.92)
-    _base.autosave(fig, "fingerprint_bars")
+    _base.autosave(fig, "feature_bars")
     if show:
         plt.show()
     return fig

@@ -4,7 +4,7 @@
 # 每个体制 = 一串算子(按序施加)。改这里 = 改「这种权力如何重写城市」,不必碰程式。
 # 想自己加/换算子:见「算子替换指南.md」(复制粘贴即可)。
 #
-# 算子词汇(见 engine/operators.py / 进阶 notebook 的算子图谱):
+# 算子清单(见 engine/operators.py / 进阶 notebook 的算子图谱):
 #   freeze(who)                          锁定某些 stakeholder 不动(state/遗产)
 #   weight_height(weights, mode)         按 stakeholder 权重重分配高度(conserve 守恒 / grow)
 #   concentrate(center,reach_frac,...)   高度向权力重心按距离收拢(守恒,单峰)
@@ -21,7 +21,7 @@
 developer_led:
   label: 开发商主导
   desc: 资本介入住宅/商业用地:拆板成塔 → 塔化变细 → 加密(多中心、GFA↑、覆盖↓)。先把 state 放大 2 倍再锁定。
-  fingerprint: 细针塔(瘦长比明显升高)
+  feature: 细高塔(瘦长比明显升高)
   steps:
     - { op: scale, target: [state], factor: 2.0 } # state 依几何中心放大 2 倍。**必须在 freeze 之前**,否则被冻结跳过
     - { op: freeze, who: [state] }
@@ -36,8 +36,8 @@ developer_led:
 
 state_led:
   label: 政府主导 / 中央集权
-  desc: 政府多拿 + 高度向权力重心(政府/公共质心)收拢(单中心一座锥峰、GFA 守恒、高度CV↑)。
-  fingerprint: 向权力重心收拢的肥峰(重心集中度普遍翻倍)
+  desc: 政府多拿 + 高度向权力重心(政府/公共质心)收拢(单中心一座尖峰、GFA 守恒、高度CV↑)。
+  feature: 向权力重心收拢的高峰(重心集中度普遍翻倍)
   steps:
     - {
         op: weight_height,
@@ -55,7 +55,7 @@ state_led:
 resident_self_build:
   label: 居民自建为主
   desc: 居民把大体量细分为自建小单元(细粒、高覆盖、低层、有机),高度趋低。state 公共不动。
-  fingerprint: 细粒碎化(栋数大增、高度趋低)
+  feature: 细粒碎化(栋数大增、高度趋低)
   steps:
     - { op: freeze, who: [state] }
     - {
@@ -71,7 +71,7 @@ resident_self_build:
 developer_scale_graded:
   label: 开发商渐变放大
   desc: 开发商用地依「到建筑中心点的距离」渐变放大 footprint(近中心最多 2 倍、向外衰减到 1 倍;高度不变、GFA↑不守恒)。
-  fingerprint: 中心膨胀(近中心 footprint 显著变大、覆盖↑)
+  feature: 中心膨胀(近中心 footprint 显著变大、覆盖↑)
   steps:
     - {
         op: scale_graded,
@@ -85,7 +85,7 @@ developer_scale_graded:
 shared:
   label: 共享 / 公共平权
   desc: 缩私有 footprint 释放共享地面 + 高度趋同(均质中高、低覆盖、大量共享地、无人独大)。
-  fingerprint: 均质开放(高度CV 最低)
+  feature: 均质开放(高度CV 最低)
   steps:
     - { op: open_ground, target: [resident, developer], ratio: 0.6, cap_m: 200 }
     - {

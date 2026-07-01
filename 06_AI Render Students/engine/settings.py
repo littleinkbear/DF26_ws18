@@ -14,6 +14,8 @@ REGIMES = _cfg["regimes"]                              # 權力體制(05 regimes
 MODEL = _cfg["model"]                                  # AI 圖像模型(Replicate)
 CAM = {"elev": _cfg["camera"]["elev"], "azim": _cfg["camera"]["azim"]}   # 固定機位
 MASSING_DPI = _cfg["massing_dpi"]                      # 體塊參考圖 dpi
+STUDY_FRAC = _cfg.get("study_frac", 0.5)               # 已停用(舊版中心矩形);保留避免 KeyError
+CONTEXT_MARGIN_M = _cfg.get("context_margin_m", 800)   # 周邊語境環寬(米):study 街區外擴多少米當透明語境
 WS05 = (ROOT / _cfg["ws05_dir"]).resolve()             # 依賴 05 資料夾
 
 PROMPTS = _cfg["prompts"]                              # 提示詞論述層(prompt_gen 讀)

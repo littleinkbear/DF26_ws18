@@ -6,7 +6,7 @@ common.py — 上海:本地多源真实数据 → 离散权利 → (只调高度
   2 裁切   build_cache / load_buildings   AI实测高度 footprint 裁到街道 + 多源 join
   3 权利   assign_all(级联查表)           一栋 = 一个 stakeholder(EULUC→Function→AOI)
   4 高度   scenario_heights               只调高度(conserve 守恒 / grow 只增)      ← 主册
-  （5 算子  operators.py / measure.py      原子算子的配方 → 形态指纹                ← 进阶册）
+  （5 算子  operators.py / measure.py      原子算子的配方 → 形态特征                ← 进阶册）
   通用     extrude_obj / plot_footprints / ground_sat(挤体、绘图、卫星底)
 
 两条取数据的路(见 config.py / 数据集说明.md):
@@ -222,9 +222,84 @@ def build_cache(name=None, slug=None):
     return out
 
 
+def build_context(slug=None, margin_m=800):
+    """渲染用【06 专用】:study 街区外的周边体量(仅 geom+height,不做多源 join、不贴角色)。
+    写 data/<slug>/context.parquet(几何 32651)= 缓冲多边形(study 外扩 margin_m 米)内、study 多边形外的 AI 建筑。
+    只供 06 当**透明语境**渲染(ControlNet canny/depth 需要周边边缘/深度);05 主流程完全不读它。需 DATASET_ROOT。
+    另把 study 多边形(UTM 环)+ margin 追加进 site.yaml(不动既有键),供 06 画研究范围红线。"""
+    slug = slug or config.SLUG
+    name = config.site_name(slug)
+    P = dataset_paths()
+    if not P["AI"].exists():
+        raise FileNotFoundError(
+            "找不到 AI 建筑数据:%s\n请先在 config.py 把 DATASET_ROOT 指向解压的「上海城市数据集」。周边语境需原始数据。" % P["AI"])
+    row, poly = subdistrict(name, P["JD"])                       # 4326 study 多边形
+    poly_utm = gpd.GeoSeries([poly], crs=4326).to_crs(UTM).iloc[0]
+    buf_utm = poly_utm.buffer(margin_m)
+    buf_4326 = gpd.GeoSeries([buf_utm], crs=UTM).to_crs(4326).iloc[0]
+
+    ai = gpd.read_file(P["AI"], bbox=buf_4326.bounds)
+    ai = ai[ai.geometry.type.isin(["Polygon", "MultiPolygon"])].copy()
+    ai = ai.rename(columns={"Height": "height_m"})
+    ai["height_m"] = pd.to_numeric(ai["height_m"], errors="coerce")
+    ai = ai[ai["height_m"] > 0]
+    ai = ai.set_crs(4326, allow_override=True).to_crs(UTM)
+    rp = ai.geometry.representative_point()
+    keep = rp.within(buf_utm) & (~rp.within(poly_utm))           # 环内、study 外 = 周边
+    sub = ai[keep].copy()
+    sub["geometry"] = sub.geometry.difference(poly_utm)          # 减去 study 面:跨界楼不再重叠实心 study(免接缝双边)
+    sub = sub[~sub.geometry.is_empty & sub.geometry.notna()]
+    ctx = gpd.GeoDataFrame(sub[["height_m", "geometry"]], geometry="geometry", crs=UTM).reset_index(drop=True)
+    ctx["area_m2"] = ctx.geometry.area
+
+    d = DATA / slug
+    d.mkdir(parents=True, exist_ok=True)
+    ctx.to_parquet(d / "context.parquet")
+    # 06 专用 metadata 写**独立 sidecar** data/<slug>/context.yaml(不碰 05 的 site.yaml,
+    # 免得 build_cache 重写 site.yaml 时把 study_poly_utm 清掉 → 红线消失)。
+    yaml.safe_dump({
+        "margin_m": int(margin_m), "n": int(len(ctx)),
+        "study_poly_utm": [[[round(x, 2), round(y, 2)] for x, y in p.exterior.coords] for p in _polys(poly_utm)],
+    }, open(d / "context.yaml", "w", encoding="utf-8"), allow_unicode=True)
+    print("  建周边语境 %s:环内 study 外 %d 栋(margin %dm)→ %s" % (
+        slug, len(ctx), margin_m, (d / "context.parquet").relative_to(ROOT)))
+    return ctx
+
+
 def has_cache(slug=None):
     slug = slug or config.SLUG
     return (DATA / slug / "buildings.parquet").exists()
+
+
+def has_context(slug=None):
+    slug = slug or config.SLUG
+    return (DATA / slug / "context.parquet").exists()
+
+
+def load_context(slug=None):
+    """读 data/<slug>/context.parquet(周边语境 geom+height+area_m2);加 'geom' 列。没有则回 None。
+    仅 06 渲染当透明语境用;05 主流程不碰。"""
+    slug = slug or config.SLUG
+    p = DATA / slug / "context.parquet"
+    if not p.exists():
+        return None
+    gdf = gpd.read_parquet(p)
+    df = pd.DataFrame(gdf.drop(columns="geometry"))
+    df["geom"] = list(gdf.geometry)
+    return df
+
+
+def study_poly_rings(slug=None):
+    """study 多边形的外环坐标(UTM 32651,list of rings);build_context 时写入 data/<slug>/context.yaml。没有则回 None。
+    06 用来画『研究范围 = 整个街区多边形』的红色边界。独立 sidecar,不受 05 的 site.yaml 重写影响。"""
+    slug = slug or config.SLUG
+    p = DATA / slug / "context.yaml"
+    if not p.exists():
+        return None
+    try:
+        return yaml.safe_load(open(p, encoding="utf-8")).get("study_poly_utm")
+    except Exception:
+        return None
 
 
 def load_buildings(slug=None):
@@ -400,8 +475,12 @@ def ground_sat(minx, miny, maxx, maxy, cache_png, factor=2.0):
     import json as _json, base64, contextily as ctx, pyproj
     from PIL import Image
     cache_png = Path(cache_png); meta_p = cache_png.with_suffix(".json")
+    req = [round(minx, 1), round(miny, 1), round(maxx, 1), round(maxy, 1)]   # 缓存身份 = 请求范围
     if cache_png.exists() and meta_p.exists():
-        return "data:image/jpeg;base64," + base64.b64encode(cache_png.read_bytes()).decode(), _json.load(open(meta_p))
+        meta = _json.load(open(meta_p))
+        # 只有 bounds 相符才复用(dict 新格式);旧格式(meta=list)或范围变了(加 context / 改 margin)→ 视为过期,重抓
+        if isinstance(meta, dict) and meta.get("bounds") == req:
+            return "data:image/jpeg;base64," + base64.b64encode(cache_png.read_bytes()).decode(), meta["local"]
     cx, cy = (minx + maxx) / 2, (miny + maxy) / 2
     hw, hh = (maxx - minx) / 2 * factor, (maxy - miny) / 2 * factor
     to4326 = pyproj.Transformer.from_crs(UTM, 4326, always_xy=True).transform
@@ -416,7 +495,7 @@ def ground_sat(minx, miny, maxx, maxy, cache_png, factor=2.0):
     arr = img[:, :, :3] if (getattr(img, "ndim", 0) == 3 and img.shape[2] >= 3) else img
     cache_png.parent.mkdir(parents=True, exist_ok=True)
     Image.fromarray(arr).save(cache_png, "JPEG", quality=82)
-    _json.dump(local, open(meta_p, "w"))
+    _json.dump({"local": local, "bounds": req}, open(meta_p, "w"))       # 存 bounds 供下次比对失效
     return "data:image/jpeg;base64," + base64.b64encode(cache_png.read_bytes()).decode(), local
 
 

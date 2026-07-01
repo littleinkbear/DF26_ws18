@@ -28,34 +28,62 @@ def _origin(recs):
 
 
 def _regime_polys(recs, ox, oy, simplify=1.0):
+    """study 楼(整个街区)→ 局部坐标多边形,in=1(全实心)。"""
     out = []
     for r in recs:
         for poly in ws05.C._polys(r["geom"]):
             ps = poly.simplify(simplify)
             xy = [[round(x - ox, 1), round(y - oy, 1)] for x, y in list(ps.exterior.coords)[:-1]]
             if len(xy) >= 3:
-                out.append({"p": xy, "h": round(float(r["h"]), 1), "sh": r["sh"]})
+                out.append({"p": xy, "h": round(float(r["h"]), 1), "sh": r["sh"], "in": 1})
+    return out
+
+
+def _context_polys(recs, ox, oy, simplify=2.0):
+    """周边语境楼 → 局部坐标多边形(粗简化省档案;跨体制不变,只嵌一次)。无 sh、in=0(透明)。"""
+    out = []
+    for r in recs:
+        for poly in ws05.C._polys(r["geom"]):
+            ps = poly.simplify(simplify)
+            xy = [[round(x - ox, 1), round(y - oy, 1)] for x, y in list(ps.exterior.coords)[:-1]]
+            if len(xy) >= 3:
+                out.append({"p": xy, "h": round(float(r["h"]), 1)})
     return out
 
 
 def build_geometry(slug, regimes=None):
     regimes = regimes or settings.REGIMES
     rr, regs = ws05.regime_recs(slug, regimes)
+    context_recs = ws05.load_context_recs(slug)                  # 周边语境(透明,跨体制不变),没有则 []
     base = rr.get("current") or next(iter(rr.values()))
-    minx, miny, maxx, maxy = _origin(base)          # 用现状 footprint 定原点/卫星(稳定)
-    ox, oy = minx, miny
+    smnx, smny, smxx, smxy = _origin(base)                       # study bounds(现状 footprint,稳定)
+    # 原点 = study+周边 最小角;全场景 bounds = study∪周边
+    if context_recs:
+        cmnx, cmny, cmxx, cmxy = _origin(context_recs)
+        ox, oy = min(smnx, cmnx), min(smny, cmny)
+        fmxx, fmxy = max(smxx, cmxx), max(smxy, cmxy)
+    else:
+        ox, oy = smnx, smny
+        fmxx, fmxy = smxx, smxy
     data = {name: _regime_polys(recs, ox, oy) for name, recs in rr.items()}
+    context = _context_polys(context_recs, ox, oy) if context_recs else []
     labels = {name: ws05.regime_label(regs, name) for name in rr}
-    # 卫星底,复用 05 ground_sat
+    # 卫星底 = 全场景(study + 周边环),factor=1;local 相对 (ox,oy)
     sat, satext = None, None
     try:
-        sat, satext = ws05.C.ground_sat(minx, miny, maxx, maxy, OUT / slug / "ground_sat.jpg", factor=2.2)
+        sat, local = ws05.C.ground_sat(ox, oy, fmxx, fmxy, OUT / slug / "ground_scene.jpg", factor=1.0)
+        satext = [local[0], local[1], local[2], local[3]]        # ground_sat local 已相对 (ox,oy)
     except Exception as e:
         print("  卫星底跳过:", e)
+    rings = ws05.C.study_poly_rings(slug)                        # study 街区多边形(UTM 环)= 红线
+    study_poly = ([[[round(x - ox, 1), round(y - oy, 1)] for x, y in ring] for ring in rings]
+                  if rings else None)
     return {"regimes": list(rr.keys()), "labels": labels, "colors": ws05.C.SH_COLOR,
             "sh_label": {k: v.split("(")[0] for k, v in ws05.C.SH_LABEL.items()},
-            "data": data, "sat": sat, "satExtent": satext,
-            "bounds": [0, 0, maxx - ox, maxy - oy]}
+            "data": data, "context": context, "sat": sat, "satExtent": satext,
+            "studyPoly": study_poly,
+            "bounds": [smnx - ox, smny - oy, smxx - ox, smxy - oy],   # study extent(相机取景)
+            "scene": [0, 0, fmxx - ox, fmxy - oy]}                    # 全场景(深度范围)
 
 
 CSS = """
@@ -92,8 +120,8 @@ button.acc{background:var(--accent);color:#fff;border-color:var(--accent);}
 def viewer_js(geom):
     return "const GEOM=%s;\n" % json.dumps(geom, separators=(",", ":")) + r"""
 const COL=GEOM.colors;
-let scene,cam,renderer,controls,ground,groups={},cur=GEOM.regimes[0],mode="massing",saved=[];
-let matDepth,matNormal,edges=[];
+let scene,cam,renderer,controls,ground,boundary,groups={},cur=GEOM.regimes[0],mode="massing",saved=[];
+let matDepth,matNormal,edges=[],ctxMeshes=[],ctxEdges=[];
 const edgeMat=new THREE.LineBasicMaterial({color:0xffffff});   // canny:白色硬边
 function init(){
   const st=document.getElementById("stage"),w=st.clientWidth,h=st.clientHeight;
@@ -111,6 +139,12 @@ function init(){
     const se=GEOM.satExtent, gw=se[2]-se[0], gh=se[3]-se[1];
     ground=new THREE.Mesh(new THREE.PlaneGeometry(gw,gh),new THREE.MeshBasicMaterial({map:tx}));
     ground.position.set((se[0]+se[2])/2,(se[1]+se[3])/2,-0.3); scene.add(ground);}
+  // 红色研究范围边界 = study 街区多边形(整个 study 都实心),z 略高于地面
+  if(GEOM.studyPoly){const zz=0.3; boundary=new THREE.Group();
+    for(const ring of GEOM.studyPoly){
+      const pts=ring.map(p=>new THREE.Vector3(p[0],p[1],zz));
+      boundary.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0xe02424})));}
+    scene.add(boundary);}
   // 各体制的体块(分组,切换可见)
   for(const name of GEOM.regimes){
     const g=new THREE.Group(); g.visible=(name===cur); scene.add(g); groups[name]=g;
@@ -120,7 +154,18 @@ function init(){
       const m=new THREE.MeshLambertMaterial({color:new THREE.Color(COL[r.sh]||"#c9c4bd")});
       const mesh=new THREE.Mesh(geo,m); mesh.scale.z=r.h; mesh.userData=r; g.add(mesh);
       const el=new THREE.LineSegments(new THREE.EdgesGeometry(geo,15),edgeMat);  // 硬边(随 mesh 缩放)
-      el.visible=false; mesh.add(el); edges.push(el);
+      el.visible=false; el.userData=r; mesh.add(el); edges.push(el);
+    }
+  }
+  // 周边语境体块(透明,跨体制不变 → 只建一次,始终可见)
+  if(GEOM.context && GEOM.context.length){const g=new THREE.Group(); scene.add(g);
+    for(const r of GEOM.context){
+      const sh=new THREE.Shape(); r.p.forEach((pt,i)=> i?sh.lineTo(pt[0],pt[1]):sh.moveTo(pt[0],pt[1]));
+      const geo=new THREE.ExtrudeGeometry(sh,{depth:1,bevelEnabled:false});
+      const m=new THREE.MeshLambertMaterial({color:new THREE.Color("#c9c4bd")});
+      const mesh=new THREE.Mesh(geo,m); mesh.scale.z=r.h; mesh.userData={in:0,sh:"context"}; g.add(mesh); ctxMeshes.push(mesh);
+      const el=new THREE.LineSegments(new THREE.EdgesGeometry(geo,15),edgeMat);
+      el.visible=false; el.userData={in:0}; mesh.add(el); ctxEdges.push(el);
     }
   }
   // 深度:自定义 shader,把**场景实际距离范围**映射成灰阶(近=白、远=黑) 正经 ControlNet depth
@@ -136,24 +181,32 @@ function init(){
 function onresize(){const st=document.getElementById("stage");cam.aspect=st.clientWidth/st.clientHeight;
   cam.updateProjectionMatrix();renderer.setSize(st.clientWidth,st.clientHeight);}
 function animate(){requestAnimationFrame(animate);controls.update();
-  if(mode==="depth"){const b=GEOM.bounds,span=Math.max(b[2]-b[0],b[3]-b[1]);
+  if(mode==="depth"){const s=GEOM.scene||GEOM.bounds,span=Math.max(s[2]-s[0],s[3]-s[1]);
     const dist=cam.position.distanceTo(controls.target);
     matDepth.uniforms.uNear.value=Math.max(1,dist-span*0.75); matDepth.uniforms.uFar.value=dist+span*0.75;}
   renderer.render(scene,cam);}
 // —— 模式:材质切换(massing 素模 / depth / normal / segmentation)——
+function styleMesh(m,massing,seg,canny){
+  const inside=m.userData.in!==0;                          // in=1 study 实心 / in=0 周边透明
+  if(massing){ m.material.color.set("#c9c4bd");
+    m.material.transparent=!inside; m.material.opacity=inside?1.0:0.30; }
+  else{ m.material.transparent=false; m.material.opacity=1.0;
+    if(seg) m.material.color.set(COL[m.userData.sh]||"#999");
+    else if(canny) m.material.color.set(0x000000); }       // 黑面遮挡,只留白色硬边
+  m.material.needsUpdate=true;
+}
 function applyMode(){
   const massing=(mode==="massing"), seg=(mode==="segmentation"), canny=(mode==="canny");
   scene.overrideMaterial = (mode==="depth")?matDepth : (mode==="normal")?matNormal : null;
   if(ground) ground.visible = massing;                     // 只有 massing 显示卫星;条件图要干净底
+  if(boundary) boundary.visible = massing;                 // 红线只在 massing 显示
   // 背景:massing 浅灰,normal/seg 白,depth/canny 黑
   scene.background=new THREE.Color(massing?0xeef1f0:((mode==="normal"||seg)?0xffffff:0x000000));
-  for(const name in groups) for(const m of groups[name].children){
-    if(!m.isMesh) continue;
-    if(massing) m.material.color.set("#c9c4bd");
-    else if(seg) m.material.color.set(COL[m.userData.sh]||"#999");
-    else if(canny) m.material.color.set(0x000000);         // 黑面遮挡,只留白色硬边
-  }
-  for(const el of edges) el.visible = canny;               // 硬边只在 canny 显示
+  for(const name in groups) for(const m of groups[name].children){ if(m.isMesh) styleMesh(m,massing,seg,canny); }
+  for(const m of ctxMeshes) styleMesh(m,massing,seg,canny);   // 周边语境同规则(depth/normal/seg/canny 都含,给 ControlNet 语境)
+  edgeMat.color.set(canny?0xffffff:0x2b2b2b);               // canny 白硬边;massing 深灰勾透明周边
+  for(const el of edges) el.visible = canny;                        // study 实心:只有 canny 显硬边
+  for(const el of ctxEdges) el.visible = canny || massing;          // 周边透明:massing 勾轮廓 + canny 硬边
   document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("on",b.dataset.mode===mode));
 }
 function setRegime(name){cur=name; for(const k in groups)groups[k].visible=(k===cur);

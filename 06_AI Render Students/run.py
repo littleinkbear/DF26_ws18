@@ -36,6 +36,14 @@ def main(argv):
     elif cmd == "report":
         for s in (rest or settings.REPORT_SITES):
             build_report.build(s)
+    elif cmd == "context":
+        # 重建周边语境体量 data/<slug>/context.parquet(需 05 config.DATASET_ROOT 指向原始数据集)。
+        # 宽度取 config.yaml 的 context_margin_m。改完重跑 canvas 生效。
+        import ws05
+        margin = getattr(settings, "CONTEXT_MARGIN_M", 800)
+        for s in (rest or settings.REPORT_SITES):
+            ws05.use_site(s)
+            ws05.C.build_context(s, margin_m=margin)
     elif cmd == "bridge":
         if len(rest) < 2:
             sys.exit("用法:python run.py bridge <slug> <05的Step_05目录>")

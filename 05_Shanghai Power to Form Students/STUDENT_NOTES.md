@@ -17,6 +17,17 @@
 - `regimes.yaml` —— 算子配方(进阶)。
 - 加算子:`算子替换指南.md` + `engine/my_operator.py`。
 
+## 每本 notebook 用到的 config / yaml
+（主场 = 该文件的主要练习 notebook）
+- **01_数据** —— `config.SLUG` + `config.DATASET_ROOT`(判断有没有数据集);建缓存时才用 `config.SITES` / `site_name()`,写 `data/<slug>/site.yaml`,读 `shanghai_lookup.yaml`。
+- **02_映射**(`shanghai_lookup.yaml` 主场) —— `config.SLUG` 读楼;全程围绕 `shanghai_lookup.yaml`:读规则 / 反事实内存改判 / `assign_all` 套用。
+- **03_天际线**(`power_scenarios.yaml` 主场) —— `config.SLUG`;`shanghai_lookup.yaml` 贴角色;`power_scenarios.yaml` 定情景,`scenario_heights` 只调高度。
+- **04_进阶**(`regimes.yaml` 主场) —— `config.SLUG`;`shanghai_lookup.yaml` 贴角色;`regimes.yaml` 配方(9 算子 × 4 体制);间接读 `data/<slug>/site.yaml`(算容积率/覆盖率要街道面积)。
+- **05_换地方**(`config.py` 主场) —— 直接改写 `config.SLUG`;`config.SITES` 列街道目录;`config.DATASET_ROOT` + `site_name()` 现建缓存并写 `site.yaml`;`shanghai_lookup.yaml` 贴角色。
+
+对应:`config.py`→05 · `shanghai_lookup.yaml`→02 · `power_scenarios.yaml`→03 · `regimes.yaml`→04。
+每本开头 `import config` 只为清模块缓存 + 取 `SLUG`,不改区块。`config.REPORT_SITES` 只有 `engine/build_report.py` 用,notebook 都不碰。
+
 ## power_scenarios.yaml 三个值
 - `mult`:高度权重。>1 长高,<1 压低。
 - `cap_m`:高度上限(米)。

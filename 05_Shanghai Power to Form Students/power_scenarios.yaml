@@ -4,7 +4,7 @@
 #  conserve(总量守恒、重分配)——总 GFA 不变,权力只重分配既有总量(某方多拿、某方少拿,加总守恒)。
 #    每方 mult = 吸引力权重:>1 多拿、<1 让出;引擎正规化使 Σ新GFA = Σ旧GFA。→ step4「总GFA×基线」=×1.00。
 #  grow(只增、都更新增)——既有为地板,只增不减,总 GFA 上升。
-# informal 在上海无信号、棟数为 0,其 mult 写了也不起作用(留作占位)。
+# informal 在上海无信号、栋数为 0,其 mult 写了也不起作用(留作占位)。
 scenarios:
   current:
     _mode: conserve
@@ -33,7 +33,7 @@ scenarios:
     informal:  {mult: 1.00}
     unknown:   {mult: 0.95}
 
-  developer_renewal:       # (grow 对照)都更新增:资本与居民实际加蓋,总 GFA 上升
+  developer_renewal:       # (grow 对照)都更新增:资本与居民实际加盖,总 GFA 上升
     _mode: grow
     developer: {mult: 1.5}
     resident:  {mult: 1.15}

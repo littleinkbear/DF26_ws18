@@ -1,11 +1,11 @@
 """
-manifest.py — out/manifest.json 的讀寫(讓 web/index.html「隨時讀取 out 最新一筆」)
+manifest.py — out/manifest.json 的读写(让 web/index.html「随时读取 out 最新一笔」)
 =================================================================
-out/manifest.json 是 web 前端的單一資料源。兩處會更新它:
-  · plots.autosave 每存一張圖 → manifest.bump(slug, step, ts)   (圖清單 + 時間戳,輕量)
-  · build_report 出完報告     → manifest.set_report(slug, n, h_max, unknown%)
-  · refresh_index.py          → 全掃 out/ 重建(載入 buildings 算完整統計)
-所有路徑都相對 out/(web/index.html 以 ../out/ 前綴取用)。fig 失敗永不影響繪圖(呼叫端 try/except)。
+out/manifest.json 是 web 前端的单一资料源。两处会更新它:
+  · plots.autosave 每存一张图 → manifest.bump(slug, step, ts)   (图清单 + 时间戳,轻量)
+  · build_report 出完报告     → manifest.set_report(slug, n, h_max, unknown%)
+  · refresh_index.py          → 全扫 out/ 重建(载入 buildings 算完整统计)
+所有路径都相对 out/(web/index.html 以 ../out/ 前缀取用)。fig 失败永不影响绘图(呼叫端 try/except)。
 """
 import json
 import glob
@@ -35,7 +35,7 @@ def _save(d):
 
 
 def _meta(slug):
-    """slug → (name, family, n)。name/family 先查 config.SITES;n 讀 data/<slug>/site.yaml。"""
+    """slug → (name, family, n)。name/family 先查 config.SITES;n 读 data/<slug>/site.yaml。"""
     import config
     name, family = slug, ""
     for s in config.SITES:
@@ -63,7 +63,7 @@ def _rel(p):
 
 
 def bump(slug, step, ts):
-    """每存一張圖呼叫:重掃該 timestamp 夾的 png,更新該 slug 的最新圖清單 + 時間。輕量、不載 buildings。"""
+    """每存一张图呼叫:重扫该 timestamp 夹的 png,更新该 slug 的最新图清单 + 时间。轻量、不载 buildings。"""
     d = _load()
     sites = d.setdefault("sites", {})
     name, family, n = _meta(slug)
@@ -81,7 +81,7 @@ def bump(slug, step, ts):
 
 
 def set_report(slug, n, h_max, unknown_pct):
-    """build_report 出完報告呼叫:補上完整統計 + 報告連結。"""
+    """build_report 出完报告呼叫:补上完整统计 + 报告连结。"""
     d = _load()
     sites = d.setdefault("sites", {})
     name, family, _ = _meta(slug)

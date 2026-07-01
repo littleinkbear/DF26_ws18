@@ -2,13 +2,13 @@
 # ===========================================================================
 # 1) 换站点:把 SLUG 改成下面 SITES 里的某个 slug,存档后在 notebook 重跑「准备」格。
 # 2)（可选,进阶）自己建缓存:下载并解压「上海城市数据集」后,把 DATASET_ROOT 指过去,
-#    跑「01_怎么选数据」notebook 的建缓存格,就能从原始多源数据**亲手重建** data/<slug>/。
+#    跑「01_怎么选数据」notebook 的建缓存格,就能从原始多源数据亲手重建 data/<slug>/。
 #    不填 DATASET_ROOT 也完全没问题:随包已带 3 站缓存,离线即可跑全部主流程。详见 数据集说明.md。
 from pathlib import Path
 
 SLUG = "lujiazui"  # 当前站点:改成 SITES 里任一 slug。换地方的完整玩法见「05_换地方-按街道取」notebook。
 
-DATASET_ROOT = "C:/baidunetdiskdownload/data_collection/上海城市数据集"  # ✏️（可选）你解压的「上海城市数据集」根目录(字符串路径),例:
+DATASET_ROOT = "C:/baidunetdiskdownload/data_collection/上海城市数据集"  # (可选)你解压的「上海城市数据集」根目录(字符串路径),例:
 #     DATASET_ROOT = "/Users/you/Downloads/上海城市数据集"
 #   留 None = 用随包缓存(离线)。填了、且数据集在,才会从原始数据建新街道的缓存。
 

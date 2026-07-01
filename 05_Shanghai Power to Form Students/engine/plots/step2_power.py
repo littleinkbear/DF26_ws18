@@ -1,4 +1,4 @@
-"""Step2 圖:角色著色圖 + 各角色棟數/面積佔比長條。df 需已有 'stakeholder' 欄。"""
+"""Step2 图:角色著色图 + 各角色栋数/面积占比长条。df 需已有 'stakeholder' 栏。"""
 import numpy as np
 import matplotlib.pyplot as plt
 import common
@@ -6,7 +6,7 @@ from . import _base
 
 
 def power_map(df, show=True):
-    """左:真實 footprint 依角色著色;右:棟數 / 面積佔比小長條。"""
+    """左:真实 footprint 依角色著色;右:栋数 / 面积占比小长条。"""
     order = common.STAKEHOLDERS
     counts = df["stakeholder"].value_counts()
     areas = df.groupby("stakeholder")["area_m2"].sum()
@@ -26,12 +26,12 @@ def power_map(df, show=True):
 
     y = np.arange(len(order)); bw = 0.38
     colors = [_base.SH_COLOR[sh] for sh in order]
-    ax_bar.barh(y + bw / 2, n_share, height=bw, color=colors, edgecolor="white", label="棟數佔比")
+    ax_bar.barh(y + bw / 2, n_share, height=bw, color=colors, edgecolor="white", label="栋数占比")
     ax_bar.barh(y - bw / 2, a_share, height=bw, color=colors, edgecolor="white",
-                alpha=0.5, label="面積佔比")
+                alpha=0.5, label="面积占比")
     ax_bar.set_yticks(y)
     ax_bar.set_yticklabels([_base.SH_LABEL[sh] for sh in order], fontsize=8)
-    ax_bar.invert_yaxis(); ax_bar.set_xlabel("佔比 share")
+    ax_bar.invert_yaxis(); ax_bar.set_xlabel("占比 share")
     ax_bar.legend(loc="upper center", bbox_to_anchor=(0.5, -0.06), ncol=2, fontsize=8, frameon=False)
 
     _base.footer(fig)

@@ -1,7 +1,7 @@
-"""Step5 圖:真實 footprint 擠成 3D 量體。
-  city_3d(sub)        — matplotlib,程式碼定角度(elev/azim)。
-  city_3d_plotly(sub) — plotly,瀏覽器裡滑鼠拖動旋轉(回傳 fig,自行 .show()/.write_html())。
-sub 需有 'stakeholder' 與高度欄(預設 'height_m';可傳 height_col 指定情景高度)。"""
+"""Step5 图:真实 footprint 挤成 3D 量体。
+  city_3d(sub)        — matplotlib,程式码定角度(elev/azim)。
+  city_3d_plotly(sub) — plotly,浏览器里滑鼠拖动旋转(回传 fig,自行 .show()/.write_html())。
+sub 需有 'stakeholder' 与高度栏(预设 'height_m';可传 height_col 指定情景高度)。"""
 import matplotlib.pyplot as plt
 import common
 from . import _base
@@ -24,7 +24,7 @@ def city_3d(sub, height_col="height_m", elev=30, azim=-60, top=None, show=True):
     ymax = max(p.bounds[3] for g in sub["geom"] for p in common._polys(g)) - oy
     hmax = float(sub[height_col].max())
     ax.set_xlim(0, xmax); ax.set_ylim(0, ymax); ax.set_zlim(0, hmax * 1.1)
-    ax.set_box_aspect((xmax, ymax, max(hmax, 1) * 4))   # z 拉高,量體才明顯
+    ax.set_box_aspect((xmax, ymax, max(hmax, 1) * 4))   # z 拉高,量体才明显
     ax.set_xlabel("x (m)"); ax.set_ylabel("y (m)"); ax.set_zlabel("高度 (m)")
     ax.view_init(elev=elev, azim=azim)
 
@@ -59,16 +59,16 @@ def city_3d_plotly(sub, height_col="height_m"):
                 if n < 3:
                     continue
                 base = len(X)
-                for (x, y) in ring:                 # 底環
+                for (x, y) in ring:                 # 底环
                     X.append(x - ox); Y.append(y - oy); Z.append(0.0)
-                for (x, y) in ring:                 # 頂環
+                for (x, y) in ring:                 # 顶环
                     X.append(x - ox); Y.append(y - oy); Z.append(h)
-                for i in range(n):                  # 牆:每邊兩個三角形
+                for i in range(n):                  # 墙:每边两个三角形
                     j = (i + 1) % n
                     b0, b1 = base + i, base + j
                     t0, t1 = base + n + i, base + n + j
                     I += [b0, b0]; J += [b1, t1]; K += [t1, t0]
-                for tri in triangulate(poly):       # 頂蓋:三角化(濾掉落在外面的)
+                for tri in triangulate(poly):       # 顶盖:三角化(滤掉落在外面的)
                     if not poly.contains(tri.representative_point()):
                         continue
                     tc = list(tri.exterior.coords)[:3]

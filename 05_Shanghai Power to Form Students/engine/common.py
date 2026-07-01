@@ -218,7 +218,7 @@ def build_cache(name=None, slug=None):
     yaml.safe_dump({"name": name, "slug": slug, "area_km2": area_km2, "n": len(out),
                     "bounds_lonlat": list(poly.bounds)},
                    open(d / "site.yaml", "w", encoding="utf-8"), allow_unicode=True)
-    print("  ✓ 建缓存 %s(%s):%d 栋 → %s" % (name, slug, len(out), (d / "buildings.parquet").relative_to(ROOT)))
+    print("  建缓存 %s(%s):%d 栋 → %s" % (name, slug, len(out), (d / "buildings.parquet").relative_to(ROOT)))
     return out
 
 

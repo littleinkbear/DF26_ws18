@@ -1,9 +1,9 @@
 """
-refresh_index.py — 全掃 out/,重建 out/manifest.json(web/index.html 的資料源)。
+refresh_index.py — 全扫 out/,重建 out/manifest.json(web/index.html 的资料源)。
 =================================================================
-notebook 存圖時會自動更新 manifest(plots.autosave);build_report 出報告也會更新。
-這支是「手動全掃重建」:把 out/ 裡每個站點的最新一筆圖 + 完整統計(載入 buildings 算
-最高/unknown%)+ 報告連結,一次寫齊。換句話說:跑完任何輸出後,跑這支就同步好首頁。
+notebook 存图时会自动更新 manifest(plots.autosave);build_report 出报告也会更新。
+这支是「手动全扫重建」:把 out/ 里每个站点的最新一笔图 + 完整统计(载入 buildings 算
+最高/unknown%)+ 报告连结,一次写齐。换句话说:跑完任何输出后,跑这支就同步好首页。
     python refresh_index.py
 """
 import sys, os, glob
@@ -18,7 +18,7 @@ import manifest
 
 
 def newest_step(slug_dir):
-    """該站點最新一筆圖:挑 mtime 最新的 Step_*/<ts> 夾,回傳 (step, ts) 或 None。"""
+    """该站点最新一笔图:挑 mtime 最新的 Step_*/<ts> 夹,回传 (step, ts) 或 None。"""
     best = None
     for ts_dir in glob.glob(os.path.join(slug_dir, "Step_*", "*")):
         if not os.path.isdir(ts_dir):
@@ -56,7 +56,7 @@ def main():
             pass                                 # 没缓存就只留图清单,不强求统计
         if ns or os.path.exists(os.path.join(sd, "report.html")):
             done += 1
-            print("  ✓ %s" % slug)
+            print("  %s" % slug)
     print("写了:", os.path.join(out, "manifest.json"), "(%d 站)" % done)
 
 

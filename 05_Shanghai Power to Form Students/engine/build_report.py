@@ -149,7 +149,7 @@ window.addEventListener("DOMContentLoaded",()=>{
 });
 let _clay=false;
 function _claySet(on){scene.traverse(o=>{if(o.material&&o.material.type==='MeshLambertMaterial'){if(on){if(!o.userData._c)o.userData._c=o.material.color.clone();o.material.color.set(0xccc7c0);}else if(o.userData._c)o.material.color.copy(o.userData._c);}});}
-function pfClay(){_clay=!_clay;_claySet(_clay);var b=document.getElementById('claybtn');if(b)b.textContent=_clay?'🎨 分色':'🧱 素模';}
+function pfClay(){_clay=!_clay;_claySet(_clay);var b=document.getElementById('claybtn');if(b)b.textContent=_clay?'分色':'素模';}
 function pfCap(){renderer.render(scene,cam);document.getElementById('cv3d').toBlob(function(bl){var a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download='view_'+cur+'_'+(_clay?'clay':'color')+'.png';a.click();});}
 window.addEventListener("DOMContentLoaded",function(){var c=document.getElementById('capbtn');if(c)c.onclick=pfCap;var y=document.getElementById('claybtn');if(y)y.onclick=pfClay;});
 """
@@ -170,7 +170,7 @@ HTML = """<!DOCTYPE html><html lang="zh-Hans"><head><meta charset="utf-8">
     <canvas id="cv3d"></canvas>
     <div class="hud">
       <div class="scn">%s</div>
-      <div class="cap"><button id="capbtn">📷 拍照</button><button id="claybtn">🧱 素模</button></div>
+      <div class="cap"><button id="capbtn">拍照</button><button id="claybtn">素模</button></div>
       <div class="card" id="met"></div>
       <div class="card"><div class="toggle">着色:<a id="ctoggle"><span id="cmode">依持份者</span></a></div>
         <div class="legend">%s</div></div>

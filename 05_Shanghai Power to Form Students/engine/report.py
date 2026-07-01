@@ -123,7 +123,7 @@ def fig_step2(slug, df, s):
     axs[1].set_yticks(y); axs[1].set_yticklabels([C.SH_LABEL[sh].split("(")[0] for sh in present])
     for i, c in enumerate(cnt):
         axs[1].text(c, y[i] + bw / 2, " %d" % c, va="center", fontsize=9)
-    axs[1].set_title("棟數 / GFA 佔比", fontsize=11); axs[1].legend(fontsize=8, loc="lower right")
+    axs[1].set_title("栋数 / GFA 占比", fontsize=11); axs[1].legend(fontsize=8, loc="lower right")
     axs[1].spines[["top", "right"]].set_visible(False)
     C.save_fig(fig, "step2_stakeholders.png", OUT / slug)
 

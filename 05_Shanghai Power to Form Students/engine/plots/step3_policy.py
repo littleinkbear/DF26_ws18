@@ -1,4 +1,4 @@
-"""Step3 圖:權力情景的高度乘數熱圖(紅=拔高 / 藍=壓低 / 白=照舊)。"""
+"""Step3 图:权力情景的高度乘数热图(红=拔高 / 蓝=压低 / 白=照旧)。"""
 import numpy as np
 import matplotlib.pyplot as plt
 import common
@@ -6,7 +6,7 @@ from . import _base
 
 
 def policy_heatmap(scenarios, show=True):
-    """scenarios = common.load_scenarios() 的結果(name -> 政策 dict)。"""
+    """scenarios = common.load_scenarios() 的结果(name -> 政策 dict)。"""
     names = list(scenarios.keys())
     shs = common.STAKEHOLDERS
     mult = np.ones((len(names), len(shs)))

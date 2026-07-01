@@ -1,7 +1,7 @@
-"""Step4 圖:套情景只調高度的新形態。
-  skyline_panels(df, heights) — N 連幅 footprints,同色階(可橫比)。
-  metrics(df, heights)       — 2×2:總 GFA / 平均高 / 最高 / 各角色平均高。
-heights = {情景名: 逐棟新高度 Series}(由 common.scenario_heights 算好傳入)。"""
+"""Step4 图:套情景只调高度的新形态。
+  skyline_panels(df, heights) — N 连幅 footprints,同色阶(可横比)。
+  metrics(df, heights)       — 2×2:总 GFA / 平均高 / 最高 / 各角色平均高。
+heights = {情景名: 逐栋新高度 Series}(由 common.scenario_heights 算好传入)。"""
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.cm import ScalarMappable
@@ -23,7 +23,7 @@ def skyline_panels(df, heights, names=None, show=True):
         ax.set_title("%s\n平均高 %.1f m · 最高 %.0f m" % (name, h.mean(), h.max()), fontsize=11)
     sm = ScalarMappable(norm=norm, cmap=_base.HEIGHT_CMAP); sm.set_array([])
     fig.colorbar(sm, ax=axes, fraction=0.018, pad=0.012).set_label(
-        "建物高度 (m) — 同一色階,可橫向比對", fontsize=10)
+        "建物高度 (m) — 同一色阶,可横向比对", fontsize=10)
     _base.footer(fig)
     _base.autosave(fig, "skyline_panels")
     if show:
@@ -53,7 +53,7 @@ def metrics(df, heights, names=None, show=True):
     cols = [palette[i % len(palette)] for i in range(len(names))]
 
     axs[0, 0].bar(x, gfa_x, color=cols); axs[0, 0].axhline(1.0, ls="--", lw=1, color="k")
-    axs[0, 0].set_title("總 GFA ×base")
+    axs[0, 0].set_title("总 GFA ×base")
     for i, v in enumerate(gfa_x):
         axs[0, 0].text(i, v, "×%.2f" % v, ha="center", va="bottom", fontsize=10)
     axs[0, 1].bar(x, mean_h, color=cols); axs[0, 1].set_title("平均高 (m)")

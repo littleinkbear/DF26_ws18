@@ -1,21 +1,15 @@
-# config.yaml —— 06 唯一「使用者要改的」設定檔(站點 / 模型 / 機位 + 提示詞論述層)
-# ============================================================================
-# 06 = 把 05 算出的「權力 → 形態」體塊,變成 AI 渲染影像 + 過渡動畫。
-# 它**依賴 05**:資料 / 引擎 / 權力體制都從隔壁 05 讀(見 ws05_dir),不重複一份。
-#
-# 只改這一檔即可。engine/ 的程式只讀不改。改完重跑 build_canvas.py / build_report.py 即同步。
-# (settings.py 現在只是把下面的值讀出來給程式用;不用打開它。)
+# config.yaml 06 唯一要改的设定(站点/模型/机位 + 提示词论述层)。
+# 只改这一档;engine/ 只读不改,改完重跑 run.py 即同步。
 
-# —— 站點 ——————————————————————————————————————————————————
-site: lujiazui                 # ✏️ 單站預設(notebook 01/02/03 用):lujiazui / caoyang / yuyuan / waitan ...
-report_sites:                  # ✏️ 批量出 canvas/report 的清單(不帶參數跑時);每站出一區塊 + out/index.html
-  - lujiazui                   #    資本/超高層(浦東 CBD)
-  - caoyang                    #    單位/工人新村(1951 社會主義計劃)
-  - yuyuan                     #    居民/里弄石庫門(老城廂細粒)
-# 可加任何 05/data/<slug>/buildings.parquet 存在的站(你機器上另有:waitan xujiahui nanjingxi laoximen ...)。
+# 站点
+site: lujiazui                 # 单站预设(notebook 01/02/03)
+report_sites:                  # 批量出 canvas/report 的清单(不带参数跑时)
+  - lujiazui                   # 资本/超高层
+  - caoyang                    # 单位/工人新村
+  - yuyuan                     # 居民/里弄石库门
+# 可加任何 05/data/<slug>/buildings.parquet 存在的站(如 waitan xujiahui nanjingxi ...)。
 
-# —— 權力體制(05 regimes.yaml 的 key + current 基線)———————————————
-# 注:用 05 的**算子體制**(regimes.yaml,形態差異大、利於出圖),不是只調高度的 power_scenarios。
+# 权力体制(05 regimes.yaml 的 key + current 基线)
 regimes:
   - current
   - developer_led
@@ -23,44 +17,38 @@ regimes:
   - resident_self_build
   - shared
 
-# —— AI 圖像模型(Replicate 上「1 張參考圖 + 文字 → 圖」)——————————————
-#   google/nano-banana              = Gemini Flash Image,"保結構改外觀"最穩(預設)
-#   black-forest-labs/flux-kontext  = 備選,圖+文編輯、保構圖
+# AI 图像模型(Replicate)
+#   google/nano-banana             = 预设,保结构改外观最稳
+#   black-forest-labs/flux-kontext = 备选
 model: google/nano-banana
 
-# —— 固定機位(動畫裡唯一不變的東西 → 畫面裡動的只有形態 = 純權力信號)——
+# 固定机位(动画里唯一不变 = 只有形态在动)
 camera:
   elev: 34
   azim: -58
 
-# —— 出圖清晰度(體塊參考圖 dpi)——————————————————————————————
+# 体块参考图 dpi
 massing_dpi: 140
 
-# —— 依賴:05 資料夾(相對本檔;一般不用改)——————————————————————
+# 05 资料夹(相对本档;一般不用改)
 ws05_dir: "../05_Shanghai Power to Form Students"
 
 
-# ============================================================================
-# 提示詞:可編輯的「論述層」(= 工作坊化約,學生改這裡)
-# ----------------------------------------------------------------------------
-# 誠實分層(06 的核心):
-#   · 結構 = 05 算出來的體塊參考圖(由 power→form 計算,誠實、可追溯)。
-#   · 表面 = 下面這些文字(AI 按"我認為這種權力長這樣"去想像的外觀)→ 論點,非資料,標 illustrative。
-# prompt 發給模型用**英文**(圖像模型對英文更穩);中文註釋解釋每段在幹嘛。
-# 改 prompts.regimes.*.look = 改"你主張這種權力的城市長什麼樣"。
+# 提示词论述层(学生改这里)。结构由 05 实算,表面由下面文字想象(illustrative)。
+# prompt 用英文;改 prompts.regimes.*.look = 改主张的外观。
 prompts:
-  # —— 全域腳手架(所有體制共用)——
+  # 全体制共用脚手架
   base:
-    view: "aerial three-quarter view of an urban district, fixed camera"      # 視角(和 05 體塊同機位)
+    view: "aerial three-quarter view of an urban district, fixed camera"
     render_style: "photorealistic architectural visualization, soft daylight, gentle atmospheric haze"
-    # 關鍵:命令模型**保住參考圖的體塊/輪廓/天際線**,不要憑空加減樓 —— 這是誠實性的護欄
+    # 护栏:命令模型保住参考图体块,不加减楼
     fidelity: "strictly preserve the exact massing, building footprints, heights and skyline of the reference image; do not invent, add, remove or move buildings"
     quality: "high detail, realistic materials, ambient occlusion, coherent lighting"
 
-  # 負面提示(不想要的)
+  # 负面提示
   negative: "extra invented towers, warped or altered skyline, changed building footprints, text, watermark, logo, people in foreground, cartoon, lowres, distorted geometry"
 
-  # —— 站點上下文(可選,按 slug;給模型一點地理語境)——
+  # 站点地理语境(可选,按 slug)
   sites:
     lujiazui: "a riverside Shanghai financial district by the Huangpu river"
     caoyang:  "a Shanghai workers' village (danwei) superblock district"
@@ -69,9 +57,7 @@ prompts:
     nanjingxi: "a central Shanghai commercial avenue district"
     default:  "a dense Chinese city district"
 
-  # —— 每種權力體制的「外觀論點」(學生可改的核心)——
-  # look = 你主張這種權力會把城市的**表面**變成什麼樣(materials / 密度 / 氛圍)。
-  # 體塊(高低疏密)來自參考圖;這裡只補"看起來像什麼材質/氣質"。
+  # 每种权力的外观论点(核心可改)。体块来自参考图,这里只补材质/气质。
   regimes:
     current:
       look: "the district as it currently stands, mixed building ages, heights and uses, realistic everyday materials"

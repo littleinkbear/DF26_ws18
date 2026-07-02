@@ -1,40 +1,42 @@
-#!/usr/bin/env python
 """
-generate_plots.py — 05 一键出图:读「当下」的设定,把完整流程的图全部重生成(免开 notebook)
+engine/pipeline.py — 05 完整流程的「后端引擎」(学生不用进这里)
 =================================================================================
-你可以自由修改这 4 份设定,然后跑本脚本,所有图会按**最新设定**重出一遍:
+顶层入口 run.py 只调 pipeline.run(...);真正把整条流程跑一遍的逻辑全在这里。
+读「当下」的 4 份设定(都在顶层、学生自由改),按最新设定把完整流程的图全部重生成:
   config.py             换站点 SLUG / DATASET_ROOT
   shanghai_lookup.yaml  谁算谁的(角色级联查表;新增角色名也可以,会自动配色)
   power_scenarios.yaml  只调高度的情景(新增/删除/改名情景,图会自动跟着变)
   regimes.yaml          权力体制 = 算子配方(新增 op、改 op 顺序、改参数都自动生效)
 
-自定义算子:写在 engine/my_operator.py(顶层函数),本脚本会**自动登记**,
+自定义算子:写在 engine/my_operator.py(顶层函数),会**自动登记**,
 regimes.yaml 里就能直接用 { op: 你的函数名, ... }。
 
-产出(对应 05_完整流程.ipynb 的全部 plots):
+产出:
   out/<slug>/<时间戳>/01_data_overview.png ... NN_*.png + city_current.obj
+  out/<slug>/<时间戳>/NN_steps_<体制>.png  每个体制的算子序列总览(每步一栏:上 3D 下 2D)
+  out/<slug>/<时间戳>/regime_steps/<体制>/<步序>_<算子>_3d.png 与 _2d.png
+                                          逐步单图(全部建筑;00_current=基线)
+  out/<slug>/<时间戳>/regime_steps/<体制>/anim_3d.gif 与 anim_2d.gif
+                                          逐步渐变过程动画(交叉溶解)
   out/<slug>/<时间戳>/run.log             本次全部文字输出
   out/<slug>/<时间戳>/error.log           出错时的完整回溯(没错就不生成)
   out/<slug>/<时间戳>/_config_snapshot/   本次用的 4 份设定快照(以后好回查)
 
-用法:
-  python generate_plots.py                # 跑 config.py 里的 SLUG
-  python generate_plots.py waitan yuyuan  # 跑指定站点(可多个)
-  python generate_plots.py --all          # 跑所有已缓存街道(data/<slug>/buildings.parquet)
+对外只暴露一个函数:run(slugs=None, all_sites=False, bridge06=False) → dict{slug: ok}。
 """
 import sys
-import os
-import json
 import shutil
 import inspect
-import argparse
 import traceback
 from datetime import datetime
 from pathlib import Path
 
-HERE = Path(__file__).resolve().parent
-sys.path.insert(0, str(HERE))               # config.py / *.yaml 在这层
-sys.path.insert(0, str(HERE / "engine"))    # engine 代码
+# --- 让「独立后端」也找得到设定与引擎代码(config/*.yaml 在顶层,引擎代码在 engine/)---
+ENGINE = Path(__file__).resolve().parent
+PKG_ROOT = ENGINE.parent
+for _p in (str(PKG_ROOT), str(ENGINE)):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
 
 try:                                         # Windows 终端 cp950 打中文会崩,强制 utf-8
     sys.stdout.reconfigure(encoding="utf-8")
@@ -147,22 +149,6 @@ def extend_palette(df):
         print("检测到新角色(自动配色):", ", ".join(sorted(extra)))
 
 
-def unique_regime_steps(regs):
-    """regimes.yaml 里出现过的算子步骤去重(op+参数),给「算子图谱」自动逐个 demo。freeze 视觉无变化,跳过。"""
-    seen, demos = set(), []
-    for recipe in regs.values():
-        for step in recipe.get("steps", []):
-            op = step.get("op")
-            if not op or op == "freeze":
-                continue
-            key = (op, json.dumps({k: v for k, v in step.items() if k != "op"},
-                                  sort_keys=True, ensure_ascii=False, default=str))
-            if key not in seen:
-                seen.add(key)
-                demos.append(step)
-    return demos
-
-
 # --------------------------------------------------------------- 各阶段(对应 notebook A~D)
 def stage_data(slug):
     """A 数据→映射:载数据、按最新 lookup 重贴角色、画 data_overview + power_map。回传 df。"""
@@ -199,28 +185,11 @@ def stage_skyline(df):
 
 
 def stage_operators(df, slug):
-    """C 权力算子:regimes.yaml 里每种算子自动 demo → 各体制横比 → 形态特征量化。"""
+    """C 权力算子:各体制横比 + 形态特征量化(单算子 demo 已并入阶段 E 的逐步序列)。"""
     recs = C.to_recs(df)
     prints.op_list(recs)
     regs = ops.load_regimes()
     prints.regimes(regs)
-
-    for step in unique_regime_steps(regs):                # 自动算子图谱:配方里用到什么就 demo 什么
-        op = step["op"]
-        kw = {k: v for k, v in step.items() if k != "op"}
-        title = "%s %s" % (op, json.dumps(kw, ensure_ascii=False, default=str))
-        if op not in ops.OPS:
-            _log_error("算子demo:%s" % op,
-                       "算子「%s」未登记:请在 engine/operators.py 的 OPS 加一行,"
-                       "或在 engine/my_operator.py 写成顶层函数(本脚本会自动登记)。" % op)
-            continue
-
-        def _demo():
-            after = ops.OPS[op](recs, **kw)              # 算子皆纯函数(内部先复制),recs 不会被改
-            import numpy as np
-            dh = abs(float(np.mean([r["h"] for r in after])) - float(np.mean([r["h"] for r in recs])))
-            plots.operator_demo(recs, after, title, color=("h" if dh > 0.5 else "sh"), show=False)
-        _guard("算子demo:%s" % title, _demo)
 
     after, labels = {}, {}
     for n, recipe in regs.items():                        # 每个体制单独套配方,坏一个不拖全部
@@ -237,15 +206,51 @@ def stage_operators(df, slug):
     return after
 
 
-def stage_3d(df, heights, slug):
-    """D 3D 量体 + OBJ:现状 + 每个情景各一张 3D;OBJ 落到本次时间戳夹。"""
-    plots.city_3d(df, top=120, show=False)
-    for n, h in (heights or {}).items():
-        if n == "current":
-            continue
-        d2 = df.copy()
-        d2["height_m"] = h.values
-        _guard("3D:%s" % n, plots.city_3d, d2, top=120, show=False)
+def stage_regime_steps(df, slug):
+    """E 体制算子序列:每个体制按 steps 顺序**逐步**套算子。
+    每体制一张总览(每步一栏:上排 3D、下排 2D footprint,同尺度可横比),
+    并逐步各出 3D / 2D 两张单图(全部建筑、不抽样)
+    → regime_steps/<体制>/{步序}_{算子}_3d.png 与 _2d.png(00_current=基线)。"""
+    recs = C.to_recs(df)
+    regs = ops.load_regimes()
+
+    for name, recipe in regs.items():                     # 每个体制独立 guard,坏一个不拖全部
+        def _one(name=name, recipe=recipe):
+            states = [("current", recs)]
+            cur = recs
+            for step in recipe.get("steps", []):
+                op = step["op"]
+                if op not in ops.OPS:
+                    raise KeyError("算子「%s」未登记(regimes.yaml 的 %s):请写进 engine/my_operator.py"
+                                   "(会自动登记)或 engine/operators.py 的 OPS。" % (op, name))
+                kw = {k: v for k, v in step.items() if k != "op"}
+                cur = ops.OPS[op](cur, **kw)              # 累积套用:state_i = op_i(state_{i-1})
+                states.append((op, cur))
+            label = recipe.get("label", name)
+            plots.regime_steps_strip(states, title="%s(%s)· 算子序列" % (label, name),
+                                     save_name="steps_%s" % name, show=False)
+            plt.close("all")
+            scene = plots.regime_steps._scene_of(states)  # 全序列共同 bounds/z,逐帧同尺度
+            d = _STATE["outdir"] / "regime_steps" / name
+            frames = {"3d": [], "2d": []}
+            for i, (op, st) in enumerate(states):
+                t = "%s · step %d · %s" % (label, i, op)
+                for kind, fn in (("3d", plots.regime_step_3d), ("2d", plots.regime_step_2d)):
+                    p = d / ("%02d_%s_%s.png" % (i, op, kind))
+                    fn(st, title=t, scene=scene, path=p, show=False)
+                    plt.close("all")
+                    frames[kind].append(p)
+                    print("  -> saved", p.relative_to(C.ROOT))
+            for kind, ps in frames.items():               # 逐帧串成渐变过程 gif(几何 morph)
+                g = plots.steps_gif_morph(states, kind, d / ("anim_%s.gif" % kind),
+                                          scene=scene, label=label, frame_paths=ps)
+                if g is not None:
+                    print("  -> saved", g.relative_to(C.ROOT))
+        _guard("体制序列:%s" % name, _one)
+
+
+def stage_obj(df, slug):
+    """D OBJ:现状挤成 OBJ 落到本次时间戳夹(3D png 已并入阶段 E 的逐步序列)。"""
     objp, nv, nf = C.export_obj(df, slug)
     prints.obj_written(objp, nv, nf)
     dst = _STATE["outdir"] / objp.name
@@ -271,8 +276,8 @@ def run_site(slug):
         snap = outdir / "_config_snapshot"                # 本次设定快照:以后回查这批图是哪套设定出的
         snap.mkdir(exist_ok=True)
         for f in CONFIG_FILES:
-            if (HERE / f).exists():
-                shutil.copyfile(HERE / f, snap / f)
+            if (C.ROOT / f).exists():
+                shutil.copyfile(C.ROOT / f, snap / f)
         print("设定快照:", ", ".join(CONFIG_FILES), "→", snap.relative_to(C.ROOT))
         print("-" * 78)
 
@@ -280,9 +285,10 @@ def run_site(slug):
         if df is None:
             print("⚠ 数据阶段失败,本站中止(回溯见 error.log)。")
             return False
-        heights = _guard("B 天际线", stage_skyline, df)
+        _guard("B 天际线", stage_skyline, df)
         _guard("C 权力算子", stage_operators, df, slug)
-        _guard("D 3D+OBJ", stage_3d, df, heights, slug)
+        _guard("D OBJ", stage_obj, df, slug)
+        _guard("E 体制算子序列", stage_regime_steps, df, slug)
 
         print("-" * 78)
         if _STATE["errors"]:
@@ -296,16 +302,17 @@ def run_site(slug):
         logf.close()
 
 
-def main():
-    ap = argparse.ArgumentParser(description="按最新 config/YAML 重生成 05 全部图 → out/<slug>/<时间戳>/")
-    ap.add_argument("slugs", nargs="*", help="站点 slug(留空 = config.SLUG)")
-    ap.add_argument("--all", action="store_true", help="跑所有已缓存街道")
-    args = ap.parse_args()
-
-    if args.all:
+# --------------------------------------------------------------- 对外唯一入口
+def run(slugs=None, all_sites=False, bridge06=False):
+    """跑完整流程 A~D。
+      slugs      站点 slug 列表;留空 = config.SLUG。
+      all_sites  True = 跑所有已缓存街道(data/<slug>/buildings.parquet)。
+      bridge06   True = 跑完再接 06_AI Render 出 canvas.html / report.html(见 engine/bridge06.py)。
+    回传 {slug: ok}。"""
+    if all_sites:
         slugs = sorted(p.name for p in C.DATA.iterdir() if (p / "buildings.parquet").exists())
     else:
-        slugs = args.slugs or [config.SLUG]
+        slugs = slugs or [config.SLUG]
 
     prints.ready()
     register_custom_ops()
@@ -316,9 +323,9 @@ def main():
     print("\n" + "=" * 78)
     for s, ok in results.items():
         print(("✅" if ok else "⚠ ") + " " + s)
-    if not all(results.values()):
-        sys.exit(1)
 
+    if bridge06:
+        import bridge06 as B06
+        B06.bridge(list(results.keys()))
 
-if __name__ == "__main__":
-    main()
+    return results

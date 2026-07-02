@@ -30,6 +30,7 @@ from .step3_policy import policy_heatmap
 from .step4_form import skyline_panels, metrics
 from .step5_3d import city_3d, city_3d_plotly
 from .operator_atlas import operator_demo, regime_compare, feature_bars
+from .regime_steps import regime_steps_strip, regime_step_3d, regime_step_2d, steps_gif_morph
 
 __all__ = [
     "SH_COLOR", "SH_LABEL", "HEIGHT_CMAP",
@@ -38,4 +39,5 @@ __all__ = [
     "satellite_figureground", "data_overview", "power_map", "policy_heatmap",
     "skyline_panels", "metrics", "city_3d", "city_3d_plotly",
     "operator_demo", "regime_compare", "feature_bars",
+    "regime_steps_strip", "regime_step_3d", "regime_step_2d", "steps_gif_morph",
 ]

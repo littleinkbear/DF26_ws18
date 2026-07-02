@@ -23,7 +23,8 @@ developer_led:
   desc: 资本介入住宅/商业用地:拆板成塔 → 塔化变细 → 加密(多中心、GFA↑、覆盖↓)。先把 state 放大 2 倍再锁定。
   feature: 细高塔(瘦长比明显升高)
   steps:
-    - { op: scale, target: [state], factor: 2.0 } # state 依几何中心放大 2 倍。**必须在 freeze 之前**,否则被冻结跳过
+    - { op: twist , target:[developer], deg_per_100m: 1.0 } # developer 旋转 0.2 弧度,让塔化更自然
+    - { op: scale, target: [state], factor: 10.0 } # state 依几何中心放大 2 倍。**必须在 freeze 之前**,否则被冻结跳过
     - { op: freeze, who: [state] }
     - {
         op: split_to_towers,

@@ -2,11 +2,11 @@
 # 只改这一档;engine/ 只读不改,改完重跑 run.py 即同步。
 
 # 站点
-site: lujiazui                 # 单站预设(notebook 01/02/03)
-report_sites:                  # 批量出 canvas/report 的清单(不带参数跑时)
-  - lujiazui                   # 资本/超高层
-  - caoyang                    # 单位/工人新村
-  - yuyuan                     # 居民/里弄石库门
+site: lujiazui # 单站预设(notebook 01/02/03)
+report_sites: # 批量出 canvas/report 的清单(不带参数跑时)
+  - lujiazui # 资本/超高层
+  - caoyang # 单位/工人新村
+  - yuyuan # 居民/里弄石库门
 # 可加任何 05/data/<slug>/buildings.parquet 存在的站(如 waitan xujiahui nanjingxi ...)。
 
 # 权力体制(05 regimes.yaml 的 key + current 基线)
@@ -36,11 +36,15 @@ massing_dpi: 140
 # 周边环宽度(米):study 街区外扩多少米当透明语境。改大=更多周边、canvas 档案更大。
 #   ⚠ 改这个数后要重建周边体量:  python run.py context lujiazui   (需 05 的 DATASET_ROOT)
 context_margin_m: 800
-study_frac: 0.5   # 已停用(旧版中心矩形);留着不影响。
+study_frac: 0.5 # 已停用(旧版中心矩形);留着不影响。
+
+# 卫星底图取图倍率:抓比场景(study + 周边环)宽 sat_factor× 的真实卫星贴地面。
+#   1.0 = 刚好覆盖场景;>1 = 四周多留真实卫星语境(数字越大范围越大、下载越慢、canvas 档越大)。
+#   改这个数后卫星底会自动重抓(缓存身份 = bounds + factor);太大会触发较低 zoom(见 05 ground_sat)。
+sat_factor: 3.0
 
 # 05 资料夹(相对本档;一般不用改)
 ws05_dir: "../05_Shanghai Power to Form Students"
-
 
 # 提示词论述层(学生改这里)。结构由 05 实算,表面由下面文字想象(illustrative)。
 # prompt 用英文;改 prompts.regimes.*.look = 改主张的外观。
@@ -59,11 +63,11 @@ prompts:
   # 站点地理语境(可选,按 slug)
   sites:
     lujiazui: "a riverside Shanghai financial district by the Huangpu river"
-    caoyang:  "a Shanghai workers' village (danwei) superblock district"
-    yuyuan:   "a Shanghai old-town lane-house (lilong) district"
-    waitan:   "a Shanghai bund waterfront district with historic facades"
+    caoyang: "a Shanghai workers' village (danwei) superblock district"
+    yuyuan: "a Shanghai old-town lane-house (lilong) district"
+    waitan: "a Shanghai bund waterfront district with historic facades"
     nanjingxi: "a central Shanghai commercial avenue district"
-    default:  "a dense Chinese city district"
+    default: "a dense Chinese city district"
 
   # 每种权力的外观论点(核心可改)。体块来自参考图,这里只补材质/气质。
   regimes:

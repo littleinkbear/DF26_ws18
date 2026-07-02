@@ -60,7 +60,7 @@ def render_massing(recs, path, color="mono", cam=None, dpi=None, zmax=None, titl
 
     if ground == "sat":
         try:
-            arr, local = _ground_texture(minx, miny, maxx, maxy, slug, factor=1.0)   # 覆盖全环
+            arr, local = _ground_texture(minx, miny, maxx, maxy, slug, factor=settings.SAT_FACTOR)   # 覆盖全环(倍率见 config.yaml sat_factor)
             # 下采样贴 z=0 平面;arr[0]=北=上,需上下翻转对齐 y
             step = max(1, max(arr.shape[:2]) // 300)
             tex = arr[::step, ::step] / 255.0

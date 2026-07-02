@@ -68,10 +68,10 @@ def build_geometry(slug, regimes=None):
     data = {name: _regime_polys(recs, ox, oy) for name, recs in rr.items()}
     context = _context_polys(context_recs, ox, oy) if context_recs else []
     labels = {name: ws05.regime_label(regs, name) for name in rr}
-    # 卫星底 = 全场景(study + 周边环),factor=1;local 相对 (ox,oy)
+    # 卫星底 = 全场景(study + 周边环),倍率 = config.yaml sat_factor;local 相对 (ox,oy)
     sat, satext = None, None
     try:
-        sat, local = ws05.C.ground_sat(ox, oy, fmxx, fmxy, OUT / slug / "ground_scene.jpg", factor=1.0)
+        sat, local = ws05.C.ground_sat(ox, oy, fmxx, fmxy, OUT / slug / "ground_scene.jpg", factor=settings.SAT_FACTOR)
         satext = [local[0], local[1], local[2], local[3]]        # ground_sat local 已相对 (ox,oy)
     except Exception as e:
         print("  卫星底跳过:", e)

@@ -475,10 +475,10 @@ def ground_sat(minx, miny, maxx, maxy, cache_png, factor=2.0):
     import json as _json, base64, contextily as ctx, pyproj
     from PIL import Image
     cache_png = Path(cache_png); meta_p = cache_png.with_suffix(".json")
-    req = [round(minx, 1), round(miny, 1), round(maxx, 1), round(maxy, 1)]   # 缓存身份 = 请求范围
+    req = [round(minx, 1), round(miny, 1), round(maxx, 1), round(maxy, 1), round(factor, 3)]   # 缓存身份 = 请求范围 + 取图倍率
     if cache_png.exists() and meta_p.exists():
         meta = _json.load(open(meta_p))
-        # 只有 bounds 相符才复用(dict 新格式);旧格式(meta=list)或范围变了(加 context / 改 margin)→ 视为过期,重抓
+        # 只有 bounds+factor 相符才复用(dict 新格式);旧格式(meta=list)或范围/倍率变了(加 context / 改 margin / 改 factor)→ 视为过期,重抓
         if isinstance(meta, dict) and meta.get("bounds") == req:
             return "data:image/jpeg;base64," + base64.b64encode(cache_png.read_bytes()).decode(), meta["local"]
     cx, cy = (minx + maxx) / 2, (miny + maxy) / 2

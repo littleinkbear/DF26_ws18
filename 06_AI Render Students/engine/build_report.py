@@ -210,7 +210,9 @@ figure img{width:100%;border-radius:7px;display:block;} figcaption{font-size:12p
 <h1>__SITE__ 05 完整流程结果</h1>
 <p>下方是本次 05 跑出的图。往下一步 06 把同一批体块变成互动画布 / AI 渲染报告:</p>
 <div>__LINKS__</div>
-<div class="sec">本次产出的图(05 Step_05)</div>
+<div class="sec">算子序列渐变动画(regime_steps)</div>
+<div class="grid">__GIFS__</div>
+<div class="sec">本次产出的图</div>
 <div class="grid">__FIGS__</div>
 </body></html>"""
 
@@ -234,8 +236,13 @@ def build_bridge_index(slug, step05_dir, r06=None):
         links = '<p>(06 产出还没生成:先在 06 跑 build_report.py)</p>'
     figs = "".join('<figure><img src="%s"><figcaption>%s</figcaption></figure>'
                    % (urllib.parse.quote(p.name), p.stem) for p in pngs) or "<p>(此目录暂无 png)</p>"
+    # 算子序列渐变动画:05 run.py 的 regime_steps/<体制>/anim_3d.gif / anim_2d.gif
+    gifs = sorted(step05_dir.glob("regime_steps/*/anim_*.gif"))
+    gfigs = "".join('<figure><img src="%s"><figcaption>%s · %s</figcaption></figure>'
+                    % (_rel(g, step05_dir), g.parent.name, g.stem) for g in gifs) \
+            or "<p>(无动画;05 的 run.py 会输出 regime_steps/&lt;体制&gt;/anim_*.gif)</p>"
     html = (INDEX05.replace("__SITE__", str(site_name))
-            .replace("__LINKS__", links).replace("__FIGS__", figs))
+            .replace("__LINKS__", links).replace("__GIFS__", gfigs).replace("__FIGS__", figs))
     p = step05_dir / "index.html"
     p.write_text(html, encoding="utf-8")
     print("写了 05 结果页:", p)

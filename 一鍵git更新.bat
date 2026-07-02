@@ -6,9 +6,13 @@ REM    0) If Git is not installed -> install it automatically (pure cmd)
 REM         - winget first (built into Windows 10/11)
 REM         - else download official installer and run it silently
 REM         - else open the download page in your browser
-REM    1) Backs up any teacher file you edited as  name-1.ext  (no data loss)
-REM    2) Restores the originals, then pulls the teacher's latest version
-REM    3) Your own NEW files (untracked) are NEVER touched
+REM    1) Temporarily backs up edited teacher files, then pulls latest;
+REM       the _my_backup_<time> folder is DELETED automatically at the end
+REM    2) Your own NEW files (untracked) are NEVER touched
+REM    3) PROTECTED files are never overwritten by the update (local wins):
+REM         05_Shanghai Power to Form Students\config.py
+REM         05_Shanghai Power to Form Students\*.yaml
+REM         06_AI Render Students\*.yaml
 REM  Usage: put this .bat in the project (repo) ROOT folder, then double-click.
 REM  (File contents are kept ASCII-only on purpose, so cmd never mis-parses.)
 REM ===================================================================
@@ -27,13 +31,13 @@ REM  STEP 0: make sure Git exists (install it if it does not)
 REM ============================================================
 where git >nul 2>&1
 if not errorlevel 1 (
-  echo [0/4] Git found:
+  echo [0/5] Git found:
   git --version
   echo.
   goto have_git
 )
 
-echo [0/4] Git not found. Installing it for you first...
+echo [0/5] Git not found. Installing it for you first...
 echo.
 
 REM --- 0a) Preferred path: winget (Windows 10 1809+ / Windows 11) ---
@@ -152,21 +156,28 @@ git merge --abort >nul 2>&1
 git rebase --abort >nul 2>&1
 git cherry-pick --abort >nul 2>&1
 
-echo [1/4] Fetching from remote...
+echo [1/5] Fetching from remote...
 git fetch origin
 for /f "delims=" %%b in ('git rev-parse --abbrev-ref HEAD') do set "BRANCH=%%b"
 echo       Current branch: !BRANCH!
 echo.
 
-echo [2/4] Backing up files you edited into a timestamped folder (if any)...
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='SilentlyContinue'; [Console]::OutputEncoding=[Text.Encoding]::UTF8; $ts=Get-Date -Format 'yyyyMMdd_HHmmss'; $bk='_my_backup_'+$ts; $m=@(& git -c core.quotepath=false diff --name-only HEAD | Where-Object {$_}); if($m.Count -eq 0){ Write-Host '      (no local edits to back up)' } else { foreach($p in $m){ if(Test-Path -LiteralPath $p){ $dest=Join-Path $bk $p; $dd=Split-Path -Parent $dest; if($dd -and -not (Test-Path -LiteralPath $dd)){ New-Item -ItemType Directory -Force -Path $dd | Out-Null }; Copy-Item -LiteralPath $p -Destination $dest -Force; Write-Host ('      backup: ' + $p) } }; Write-Host ('      -> all saved in folder: ' + $bk) }"
+echo [2/5] Backing up files you edited into a timestamped folder (if any)...
+for /f "delims=" %%t in ('powershell -NoProfile -Command "Get-Date -Format yyyyMMdd_HHmmss"') do set "TS=%%t"
+set "BKDIR=_my_backup_%TS%"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='SilentlyContinue'; [Console]::OutputEncoding=[Text.Encoding]::UTF8; $bk='%BKDIR%'; $m=@(& git -c core.quotepath=false diff --name-only HEAD | Where-Object {$_}); if($m.Count -eq 0){ Write-Host '      (no local edits to back up)' } else { foreach($p in $m){ if(Test-Path -LiteralPath $p){ $dest=Join-Path $bk $p; $dd=Split-Path -Parent $dest; if($dd -and -not (Test-Path -LiteralPath $dd)){ New-Item -ItemType Directory -Force -Path $dd | Out-Null }; Copy-Item -LiteralPath $p -Destination $dest -Force; Write-Host ('      backup: ' + $p) } }; Write-Host ('      -> all saved in folder: ' + $bk) }"
 echo.
 
-echo [3/4] Restoring originals to teacher's version...
+echo [3/5] Protecting your local config files (these will NOT be overwritten)...
+set "KEEPDIR=%TEMP%\_keep_local_%RANDOM%%RANDOM%"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='SilentlyContinue'; [Console]::OutputEncoding=[Text.Encoding]::UTF8; $keep='%KEEPDIR%'; $root=(Get-Location).Path; $pats=@('05_Shanghai Power to Form Students\config.py','05_Shanghai Power to Form Students\*.yaml','06_AI Render Students\*.yaml'); $n=0; foreach($p in $pats){ Get-Item -Path $p -ErrorAction SilentlyContinue | Where-Object { -not $_.PSIsContainer } | ForEach-Object { $rel=$_.FullName.Substring($root.Length+1); $dest=Join-Path $keep $rel; $dd=Split-Path -Parent $dest; if(-not (Test-Path -LiteralPath $dd)){ New-Item -ItemType Directory -Force -Path $dd | Out-Null }; Copy-Item -LiteralPath $_.FullName -Destination $dest -Force; Write-Host ('      keep local: ' + $rel); $n++ } }; if($n -eq 0){ Write-Host '      (no protected files found)' }"
+echo.
+
+echo [4/5] Restoring originals to teacher's version...
 git reset --hard HEAD >nul 2>&1
 echo.
 
-echo [4/4] Updating to latest (git pull)...
+echo [5/5] Updating to latest (git pull)...
 git pull origin !BRANCH!
 if errorlevel 1 (
   echo.
@@ -174,10 +185,18 @@ if errorlevel 1 (
   echo       ^(your edits are already backed up; practice files are safe^)
   git reset --hard origin/!BRANCH!
 )
+echo.
+
+echo       Putting your protected config files back (local wins)...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='SilentlyContinue'; [Console]::OutputEncoding=[Text.Encoding]::UTF8; $keep='%KEEPDIR%'; if(Test-Path -LiteralPath $keep){ Get-ChildItem -LiteralPath $keep -Recurse -File | ForEach-Object { $rel=$_.FullName.Substring($keep.Length+1); $dd=Split-Path -Parent $rel; if($dd -and -not (Test-Path -LiteralPath $dd)){ New-Item -ItemType Directory -Force -Path $dd | Out-Null }; Copy-Item -LiteralPath $_.FullName -Destination $rel -Force; Write-Host ('      restored: ' + $rel) }; Remove-Item -LiteralPath $keep -Recurse -Force } else { Write-Host '      (nothing to restore)' }"
+
+echo       Removing this run's backup folder (protected files already restored)...
+if defined BKDIR if exist "%BKDIR%" rd /s /q "%BKDIR%"
 
 echo.
 echo ===== DONE.  You are now on the teacher's latest version. =====
-echo Your edits (if any) were saved in a  _my_backup_<time>  folder - check anytime.
+echo Protected config files (config.py / *.yaml) kept YOUR local version.
+echo NOTE: edits to OTHER teacher files were reset to the teacher's version.
 
 :end
 echo.

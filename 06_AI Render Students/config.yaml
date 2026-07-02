@@ -10,6 +10,9 @@ report_sites: # 批量出 canvas/report 的清单(不带参数跑时)
 # 可加任何 05/data/<slug>/buildings.parquet 存在的站(如 waitan xujiahui nanjingxi ...)。
 
 # 权力体制(05 regimes.yaml 的 key + current 基线)
+#   改了 05 regimes.yaml(改名/增删体制)记得同步这里;
+#   或直接写  regimes: all  = current + 自动跟随 05 regimes.yaml 的全部体制。
+#   清单里 05 找不到的名字会被跳过并警告;全对不上时自动改用 05 的全部体制(不再报 KeyError)。
 regimes:
   - current
   - developer_led
@@ -41,7 +44,7 @@ study_frac: 0.5 # 已停用(旧版中心矩形);留着不影响。
 # 卫星底图取图倍率:抓比场景(study + 周边环)宽 sat_factor× 的真实卫星贴地面。
 #   1.0 = 刚好覆盖场景;>1 = 四周多留真实卫星语境(数字越大范围越大、下载越慢、canvas 档越大)。
 #   改这个数后卫星底会自动重抓(缓存身份 = bounds + factor);太大会触发较低 zoom(见 05 ground_sat)。
-sat_factor: 3.0
+sat_factor: 20.0
 
 # 05 资料夹(相对本档;一般不用改)
 ws05_dir: "../05_Shanghai Power to Form Students"

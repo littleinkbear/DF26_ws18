@@ -52,8 +52,7 @@ def _context_polys(recs, ox, oy, simplify=2.0):
 
 
 def build_geometry(slug, regimes=None):
-    regimes = regimes or settings.REGIMES
-    rr, regs = ws05.regime_recs(slug, regimes)
+    rr, regs = ws05.regime_recs(slug, regimes)        # 体制名由 resolve_regimes 对齐 05 regimes.yaml
     context_recs = ws05.load_context_recs(slug)                  # 周边语境(透明,跨体制不变),没有则 []
     base = rr.get("current") or next(iter(rr.values()))
     smnx, smny, smxx, smxy = _origin(base)                       # study bounds(现状 footprint,稳定)
@@ -68,11 +67,13 @@ def build_geometry(slug, regimes=None):
     data = {name: _regime_polys(recs, ox, oy) for name, recs in rr.items()}
     context = _context_polys(context_recs, ox, oy) if context_recs else []
     labels = {name: ws05.regime_label(regs, name) for name in rr}
-    # 卫星底 = 全场景(study + 周边环),倍率 = config.yaml sat_factor;local 相对 (ox,oy)
+    # 卫星底锚定 SLUG 街区 bbox 中心(稳定,不随体制缩放漂移),× sat_factor;satExtent 平移到绘图原点 (ox,oy)
     sat, satext = None, None
     try:
-        sat, local = ws05.C.ground_sat(ox, oy, fmxx, fmxy, OUT / slug / "ground_scene.jpg", factor=settings.SAT_FACTOR)
-        satext = [local[0], local[1], local[2], local[3]]        # ground_sat local 已相对 (ox,oy)
+        sx0, sy0, sx1, sy1 = ws05.slug_bbox(slug)
+        sat, local = ws05.C.ground_sat(sx0, sy0, sx1, sy1, OUT / slug / "ground_scene.jpg", factor=settings.SAT_FACTOR)
+        dx, dy = sx0 - ox, sy0 - oy                              # local 相对 (sx0,sy0) → 平移到绘图原点 (ox,oy)
+        satext = [local[0] + dx, local[1] + dy, local[2] + dx, local[3] + dy]
     except Exception as e:
         print("  卫星底跳过:", e)
     rings = ws05.C.study_poly_rings(slug)                        # study 街区多边形(UTM 环)= 红线

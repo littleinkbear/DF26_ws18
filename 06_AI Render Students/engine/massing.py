@@ -60,14 +60,17 @@ def render_massing(recs, path, color="mono", cam=None, dpi=None, zmax=None, titl
 
     if ground == "sat":
         try:
-            arr, local = _ground_texture(minx, miny, maxx, maxy, slug, factor=settings.SAT_FACTOR)   # 覆盖全环(倍率见 config.yaml sat_factor)
+            # 卫星覆盖锚定 SLUG 街区 bbox 中心(稳定,不随体制缩放漂移),× sat_factor;再平移到绘图原点 (ox,oy)
+            sx0, sy0, sx1, sy1 = ws05.slug_bbox(slug)
+            arr, local = _ground_texture(sx0, sy0, sx1, sy1, slug, factor=settings.SAT_FACTOR)   # 覆盖 SLUG bbox × sat_factor(见 config.yaml)
             # 下采样贴 z=0 平面;arr[0]=北=上,需上下翻转对齐 y
             step = max(1, max(arr.shape[:2]) // 300)
             tex = arr[::step, ::step] / 255.0
             tex = tex[::-1]                                  # 翻转使行与 y 一致
             ny, nx = tex.shape[:2]
-            gx0, gy0 = local[0], local[1]                    # local 已相对 (minx,miny)=(ox,oy)
-            gx1, gy1 = local[2], local[3]
+            dx, dy = sx0 - ox, sy0 - oy                      # local 相对 (sx0,sy0) → 平移到 (ox,oy)
+            gx0, gy0 = local[0] + dx, local[1] + dy
+            gx1, gy1 = local[2] + dx, local[3] + dy
             xs = np.linspace(gx0, gx1, nx); ys = np.linspace(gy0, gy1, ny)
             X, Y = np.meshgrid(xs, ys); Z = np.zeros_like(X)
             ax.plot_surface(X, Y, Z, rstride=1, cstride=1, facecolors=tex, shade=False,
@@ -129,8 +132,7 @@ def massing_for_regimes(slug=None, regimes=None, color="mono", ext="jpg", ground
     """对各体制出固定机位体块参考图(共用 zmax 可横比)。默认 jpg + 卫星地面。
     ground='sat' 底部铺卫星;ground=None 纯白底。返回 {regime: 图路径}。"""
     slug = slug or settings.SLUG
-    regimes = regimes or settings.REGIMES
-    rr, regs = ws05.regime_recs(slug, regimes)
+    rr, regs = ws05.regime_recs(slug, regimes)        # 体制名由 resolve_regimes 对齐 05 regimes.yaml
     context_recs = ws05.load_context_recs(slug)                # 周边语境(透明,跨体制不变),没有则 []
     zmax = max(max((r["h"] for r in recs), default=1) for recs in rr.values()) * 1.05
     out = {}

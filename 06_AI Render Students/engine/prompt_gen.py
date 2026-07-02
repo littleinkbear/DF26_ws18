@@ -74,13 +74,12 @@ def build_prompt(slug, regime, metrics=None, P=None, regs=None):
 
 
 def build_all(slug=None, regimes=None):
-    """一次出所有体制的提示词。返回 {regime: prompt_dict}。"""
+    """一次出所有体制的提示词。返回 {regime: prompt_dict}(体制名以 resolve_regimes 对齐后的为准)。"""
     slug = slug or settings.SLUG
-    regimes = regimes or settings.REGIMES
     P = load_prompts()
     mets, _ = metrics_for(slug, regimes)
     regs = ws05.ops.load_regimes(ws05.WS05 / "regimes.yaml")
-    return {r: build_prompt(slug, r, metrics=mets[r], P=P, regs=regs) for r in regimes}
+    return {r: build_prompt(slug, r, metrics=mets[r], P=P, regs=regs) for r in mets}
 
 
 def write_prompt_files(slug=None, regimes=None, ref_paths=None, prompts=None):

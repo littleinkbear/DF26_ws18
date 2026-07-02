@@ -123,7 +123,7 @@ h2.sec{font-size:15px;color:var(--muted);text-transform:uppercase;letter-spacing
 
 def build(slug=None):
     slug = slug or settings.SLUG
-    regimes = settings.REGIMES
+    regimes, _ = ws05.resolve_regimes()               # 对齐 05 regimes.yaml(缺的跳过、全缺则跟随 05)
     print("=== report: %s ===" % slug)
     prompts = ensure_artifacts(slug, regimes)
     metrics, _ = prompt_gen.metrics_for(slug, regimes)
